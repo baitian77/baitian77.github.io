@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-05-03T01:31:45.123Z</updated>
+  <updated>2017-05-03T01:53:32.312Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://yoursite.com/2017/05/03/SparkStreaming%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B/"/>
     <id>http://yoursite.com/2017/05/03/SparkStreaming处理流程/</id>
     <published>2017-05-03T00:59:37.651Z</published>
-    <updated>2017-05-03T01:31:45.123Z</updated>
+    <updated>2017-05-03T01:53:32.312Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Spark-Streaming处理流程"><a href="#Spark-Streaming处理流程" class="headerlink" title="Spark Streaming处理流程"></a>Spark Streaming处理流程</h4><p>​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。</p>
 <p>   简单来说，Spark Streaming处理流程为：</p>
@@ -220,6 +220,12 @@
     
     </summary>
     
+      <category term="Spark-Streaming" scheme="http://yoursite.com/categories/Spark-Streaming/"/>
+    
+    
+      <category term="Spark" scheme="http://yoursite.com/tags/Spark/"/>
+    
+      <category term="Spark-Streaming" scheme="http://yoursite.com/tags/Spark-Streaming/"/>
     
   </entry>
   

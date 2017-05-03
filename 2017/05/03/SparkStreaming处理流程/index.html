@@ -74,12 +74,10 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="Spark,Spark-Streaming," />
 
 
 
-
-  
 
 
   <link rel="alternate" href="/atom.xml" title="小骑士" type="application/atom+xml" />
@@ -95,12 +93,13 @@
 
 
 <meta name="description" content="Spark Streaming处理流程​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stream">
+<meta name="keywords" content="Spark,Spark-Streaming">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spark Streaming处理流程源码走读">
 <meta property="og:url" content="http://yoursite.com/2017/05/03/SparkStreaming处理流程/index.html">
 <meta property="og:site_name" content="小骑士">
 <meta property="og:description" content="Spark Streaming处理流程​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stream">
-<meta property="og:updated_time" content="2017-05-03T01:31:45.123Z">
+<meta property="og:updated_time" content="2017-05-03T01:53:32.312Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Spark Streaming处理流程源码走读">
 <meta name="twitter:description" content="Spark Streaming处理流程​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stream">
@@ -322,6 +321,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spark-Streaming/" itemprop="url" rel="index">
+                    <span itemprop="name">Spark-Streaming</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -564,6 +585,14 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag"># Spark</a>
+          
+            <a href="/tags/Spark-Streaming/" rel="tag"># Spark-Streaming</a>
+          
+        </div>
+      
 
       
         
@@ -660,7 +689,25 @@
           
 
           
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
 
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
           
 
         </nav>
