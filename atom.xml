@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-05-03T01:53:32.312Z</updated>
+  <updated>2017-05-03T02:17:34.120Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -20,9 +20,9 @@
     <link href="http://yoursite.com/2017/05/03/SparkStreaming%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B/"/>
     <id>http://yoursite.com/2017/05/03/SparkStreaming处理流程/</id>
     <published>2017-05-03T00:59:37.651Z</published>
-    <updated>2017-05-03T01:53:32.312Z</updated>
+    <updated>2017-05-03T02:17:34.120Z</updated>
     
-    <content type="html"><![CDATA[<h4 id="Spark-Streaming处理流程"><a href="#Spark-Streaming处理流程" class="headerlink" title="Spark Streaming处理流程"></a>Spark Streaming处理流程</h4><p>​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。</p>
+    <content type="html"><![CDATA[<h4 id="Spark-Streaming处理流程简介"><a href="#Spark-Streaming处理流程简介" class="headerlink" title="Spark Streaming处理流程简介"></a>Spark Streaming处理流程简介</h4><p>​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。</p>
 <p>   简单来说，Spark Streaming处理流程为：</p>
 <ul>
 <li>不停存储外部数据</li>
@@ -166,8 +166,15 @@
 </li>
 </ul>
 </li>
-<li><p>JobGenerator</p>
-<ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>  ​</p>
+<h4 id="定期启动Spark-Job"><a href="#定期启动Spark-Job" class="headerlink" title="定期启动Spark Job"></a>定期启动Spark Job</h4><ul>
 <li><p>GenerateJobs</p>
 <figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">val</span> timer = <span class="keyword">new</span> <span class="type">RecurringTimer</span>(clock, ssc.graph.batchDuration.milliseconds,</div><div class="line">  longTime =&gt; eventLoop.post(<span class="type">GenerateJobs</span>(<span class="keyword">new</span> <span class="type">Time</span>(longTime))), <span class="string">"JobGenerator"</span>)</div></pre></td></tr></table></figure>
 <p>JobGenerator.start() 后，周期性（周期为构造StreamingContext时传入的batch时间参数）调用GenerateJobs。</p>
@@ -193,13 +200,7 @@
 </ol>
 </li>
 </ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<ul>
 <li><p>总结</p>
 <ol>
 <li><p>启动独立的Spark Job用于接收外部数据。worker 接收外部数据，周期性(与batch值无关，默认200ms)封装成Block，存入Spark内存中，并将BlockInfo同步给Driver。 </p>
@@ -216,7 +217,7 @@
     
     <summary type="html">
     
-      &lt;h4 id=&quot;Spark-Streaming处理流程&quot;&gt;&lt;a href=&quot;#Spark-Streaming处理流程&quot; class=&quot;headerlink&quot; title=&quot;Spark Streaming处理流程&quot;&gt;&lt;/a&gt;Spark Streaming处理流程&lt;/h4&gt;&lt;p&gt;​ 
+      &lt;h4 id=&quot;Spark-Streaming处理流程简介&quot;&gt;&lt;a href=&quot;#Spark-Streaming处理流程简介&quot; class=&quot;headerlink&quot; title=&quot;Spark Streaming处理流程简介&quot;&gt;&lt;/a&gt;Spark Streaming处理流程简介&lt;/
     
     </summary>
     

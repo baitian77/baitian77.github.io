@@ -92,17 +92,17 @@
 
 
 
-<meta name="description" content="Spark Streaming处理流程​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stream">
+<meta name="description" content="Spark Streaming处理流程简介​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stre">
 <meta name="keywords" content="Spark,Spark-Streaming">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spark Streaming处理流程源码走读">
 <meta property="og:url" content="http://yoursite.com/2017/05/03/SparkStreaming处理流程/index.html">
 <meta property="og:site_name" content="小骑士">
-<meta property="og:description" content="Spark Streaming处理流程​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stream">
-<meta property="og:updated_time" content="2017-05-03T01:53:32.312Z">
+<meta property="og:description" content="Spark Streaming处理流程简介​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stre">
+<meta property="og:updated_time" content="2017-05-03T02:17:34.120Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Spark Streaming处理流程源码走读">
-<meta name="twitter:description" content="Spark Streaming处理流程​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stream">
+<meta name="twitter:description" content="Spark Streaming处理流程简介​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。    简单来说，Spark Stre">
 
 
 
@@ -368,7 +368,7 @@
       
 
       
-        <h4 id="Spark-Streaming处理流程"><a href="#Spark-Streaming处理流程" class="headerlink" title="Spark Streaming处理流程"></a>Spark Streaming处理流程</h4><p>​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。</p>
+        <h4 id="Spark-Streaming处理流程简介"><a href="#Spark-Streaming处理流程简介" class="headerlink" title="Spark Streaming处理流程简介"></a>Spark Streaming处理流程简介</h4><p>​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。</p>
 <p>   简单来说，Spark Streaming处理流程为：</p>
 <ul>
 <li>不停存储外部数据</li>
@@ -512,8 +512,15 @@
 </li>
 </ul>
 </li>
-<li><p>JobGenerator</p>
-<ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>  ​</p>
+<h4 id="定期启动Spark-Job"><a href="#定期启动Spark-Job" class="headerlink" title="定期启动Spark Job"></a>定期启动Spark Job</h4><ul>
 <li><p>GenerateJobs</p>
 <figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">val</span> timer = <span class="keyword">new</span> <span class="type">RecurringTimer</span>(clock, ssc.graph.batchDuration.milliseconds,</div><div class="line">  longTime =&gt; eventLoop.post(<span class="type">GenerateJobs</span>(<span class="keyword">new</span> <span class="type">Time</span>(longTime))), <span class="string">"JobGenerator"</span>)</div></pre></td></tr></table></figure>
 <p>JobGenerator.start() 后，周期性（周期为构造StreamingContext时传入的batch时间参数）调用GenerateJobs。</p>
@@ -539,13 +546,7 @@
 </ol>
 </li>
 </ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<ul>
 <li><p>总结</p>
 <ol>
 <li><p>启动独立的Spark Job用于接收外部数据。worker 接收外部数据，周期性(与batch值无关，默认200ms)封装成Block，存入Spark内存中，并将BlockInfo同步给Driver。 </p>
@@ -746,7 +747,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Spark-Streaming处理流程"><span class="nav-number">1.</span> <span class="nav-text">Spark Streaming处理流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#存储外部数据"><span class="nav-number">2.</span> <span class="nav-text">存储外部数据</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Spark-Streaming处理流程简介"><span class="nav-number">1.</span> <span class="nav-text">Spark Streaming处理流程简介</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#存储外部数据"><span class="nav-number">2.</span> <span class="nav-text">存储外部数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#定期启动Spark-Job"><span class="nav-number">3.</span> <span class="nav-text">定期启动Spark Job</span></a></li></ol></div>
             
 
           </div>
