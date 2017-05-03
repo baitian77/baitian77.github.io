@@ -516,40 +516,6 @@
 <li><p>Driver周期性（batch值）根据BlockInfos生成BlockRDD，根据RDD构造Spark Job，并执行。</p>
 </li>
 </ol>
-<p>​</p>
-<p>​</p>
-<p>​</p>
-</li>
-</ul>
-<p>   下面以一个简单Streaming Python程序为例，分析Spark Streaming程序处理流程。</p>
-<p>​    Steaming程序通常包括如下步骤：</p>
-<ul>
-<li><p>StreamingContext 初始化</p>
-<blockquote>
-<p>ssc = StreamingContext(sc,5)</p>
-</blockquote>
-</li>
-<li><p>创建streaming</p>
-<blockquote>
-<p>lines = MQTTUtils.createStream(ssc, brokerUrl, topics)</p>
-</blockquote>
-</li>
-<li><p>处理streaming</p>
-<blockquote>
-<p>topic_rdd = lines.map(lambda x : get_topic_rdd(x))</p>
-</blockquote>
-</li>
-<li><p>启动streaming</p>
-<blockquote>
-<p>ssc.start()</p>
-</blockquote>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">sc = SparkContext(conf=conf)</div><div class="line">ssc = StreamingContext(sc,<span class="number">5</span>)</div><div class="line">lines = MQTTUtils.createStream(ssc, brokerUrl, topics)</div><div class="line">topic_rdd = lines.map(<span class="keyword">lambda</span> x : get_topic_rdd(x))</div><div class="line">ssc.start()</div><div class="line">ssc.awaitTermination()</div></pre></td></tr></table></figure>
-<h4 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h4><ul>
-<li>StreamingContext<ul>
-<li>​</li>
-</ul>
 </li>
 </ul>
 
