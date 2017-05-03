@@ -252,6 +252,349 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/03/SparkStreaming处理流程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="John Doe">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/05/03/SparkStreaming处理流程/" itemprop="url">
+                  Unbenannt
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-03T08:59:37+08:00">
+                2017-05-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="Spark-Streaming处理流程"><a href="#Spark-Streaming处理流程" class="headerlink" title="Spark Streaming处理流程"></a>Spark Streaming处理流程</h4><p>​    Spark Streaming 是基于Spark的流式处理框架，会将流式计算分解成一系列短小的批处理作业。Spark Streaming会不停地接收、存储外部数据（如Kafka、MQTT、Socket等），然后每隔一定时间（称之为batch，通常为秒级别的）启动Spark Job来处理这段时间内接收到的数据。</p>
+<p>   简单来说，Spark Streaming处理流程为：</p>
+<ul>
+<li>不停存储外部数据</li>
+<li>定期启动Spark Job，处理一个时间段内的数据</li>
+</ul>
+<h4 id="存储外部数据"><a href="#存储外部数据" class="headerlink" title="存储外部数据"></a>存储外部数据</h4><ul>
+<li><p>程序调用流程</p>
+<blockquote>
+<p>StreamingContext.start()  -&gt;  JobScheduler.start()  -&gt; ReceiverTracker.start()  &amp;&amp; JobGenerator.start()</p>
+</blockquote>
+<ul>
+<li>ReceiverTracker.start() 不停地存储外部数据</li>
+<li>JobGenerator.start() 用于处理数据</li>
+</ul>
+</li>
+<li><p>ReceiverTracker</p>
+<ul>
+<li><p>位于Driver端，用于管理所有的Receiver</p>
+<ul>
+<li><p>Note：所有ReceiverInputDStream类型的DStream 都对应一个Receiver（用于接收外部数据）</p>
+<blockquote>
+<p>ReceiverInputDStream.getReceiver() 返回Receiver</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>内含ReceivedBlockTracker类型成员</p>
+<ul>
+<li><p>ReceivedBlockTracker的2个重要方法</p>
+<ul>
+<li><p>def addBlock(receivedBlockInfo: ReceivedBlockInfo): Boolean</p>
+<blockquote>
+<p>记录worker发送过来的BlockInfo，存储格式：streamId -&gt; mutable.Queue[ReceivedBlockInfo]</p>
+</blockquote>
+</li>
+<li><p>def allocateBlocksToBatch(batchTime: Time): Unit</p>
+<blockquote>
+<p>构造Time -&gt; Map[Int, Seq[ReceivedBlockInfo]] ，即构造每个batch对应的流以及Blocks的映射关系</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>构造endpoint，处理ReceiverTrackerLocalMessage类型的本地消息</p>
+<ul>
+<li>case StartAllReceivers(receivers)</li>
+<li>case RestartReceiver(receiver)</li>
+<li>case c: CleanupOldBlocks</li>
+<li>case UpdateReceiverRateLimit(streamUID, newRate)</li>
+<li>case ReportError(streamId, message, error)</li>
+</ul>
+</li>
+<li><p>start()</p>
+<ul>
+<li><p>启动endpoint，发送StartAllReceivers Message</p>
+</li>
+<li><p>Note: 在发送StartAllReceivers Message前，执行了runDummySparkJob，用于避免所有receiver被分配到同一个Executor。（设置分区数为50可以确保启动的所有task很小的概率分配到同一host上，而该Spark Job运行结束后，未执行SparkContext.stop，故而BlockManagerMaster中存储的各work的executor信息未清空，可以用于后续需求）</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Run the dummy Spark job to ensure that all slaves have registered. This avoids all the</div><div class="line"> * receivers to be scheduled on the same node.</div><div class="line"> *</div><div class="line"> * TODO Should poll the executor number and wait for executors according to</div><div class="line"> * "spark.scheduler.minRegisteredResourcesRatio" and</div><div class="line"> * "spark.scheduler.maxRegisteredResourcesWaitingTime" rather than running a dummy job.</div><div class="line"> */</div><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">runDummySparkJob</span></span>(): <span class="type">Unit</span> = &#123;</div><div class="line">  <span class="keyword">if</span> (!ssc.sparkContext.isLocal) &#123;</div><div class="line">    ssc.sparkContext.makeRDD(<span class="number">1</span> to <span class="number">50</span>, <span class="number">50</span>).map(x =&gt; (x, <span class="number">1</span>)).reduceByKey(_ + _, <span class="number">20</span>).collect()</div><div class="line">  &#125;</div><div class="line">  assert(getExecutors.nonEmpty)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>startReceiver()。ReceiverTracker收到自己发送的StartAllReceivers  Message后，对每个receiver执行startReceiver()</p>
+<ul>
+<li><p>构造RDD</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> receiverRDD: <span class="type">RDD</span>[<span class="type">Receiver</span>[_]] = ssc.sc.makeRDD(<span class="type">Seq</span>(receiver), <span class="number">1</span>)</div></pre></td></tr></table></figure>
+</li>
+<li><p>指定RDD将执行的function</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> startReceiverFunc: <span class="type">Iterator</span>[<span class="type">Receiver</span>[_]] =&gt; <span class="type">Unit</span> =</div><div class="line">(iterator: <span class="type">Iterator</span>[<span class="type">Receiver</span>[_]]) =&gt; &#123;</div><div class="line">  <span class="keyword">if</span> (!iterator.hasNext) &#123;</div><div class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">SparkException</span>(</div><div class="line">	  <span class="string">"Could not start receiver as object not found."</span>)</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">if</span> (<span class="type">TaskContext</span>.get().attemptNumber() == <span class="number">0</span>) &#123;</div><div class="line">	<span class="keyword">val</span> receiver = iterator.next()</div><div class="line">	assert(iterator.hasNext == <span class="literal">false</span>)</div><div class="line">	<span class="keyword">val</span> supervisor = <span class="keyword">new</span> <span class="type">ReceiverSupervisorImpl</span>(</div><div class="line">	  receiver, <span class="type">SparkEnv</span>.get, serializableHadoopConf.value, checkpointDirOption)</div><div class="line">	supervisor.start()</div><div class="line">	supervisor.awaitTermination()</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">	<span class="comment">// It's restarted by TaskScheduler, but we want to reschedule it again. So exit it.</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>Note：RDD实际执行ReceiverSupervisorImpl.start()，task失败后重试时将重新调度</p>
+</blockquote>
+</li>
+<li><p>提交Spark Job</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"> <span class="keyword">val</span> future = ssc.sparkContext.submitJob[<span class="type">Receiver</span>[_], <span class="type">Unit</span>, <span class="type">Unit</span>](</div><div class="line">receiverRDD, startReceiverFunc, <span class="type">Seq</span>(<span class="number">0</span>), (_, _) =&gt; <span class="type">Unit</span>, ())</div></pre></td></tr></table></figure>
+<blockquote>
+<p>至此，Streaming启动了Spark Job，不停的接收外部数据</p>
+</blockquote>
+</li>
+<li><p><strong>ReceiverSupervisorImpl</strong>   直接接收外部数据的关键类，重点分析</p>
+<ul>
+<li><p><strong>BlockGenerator</strong>。ReceiverSupervisorImpl包含的重要数据成员</p>
+<ul>
+<li><p>def addData(data: Any): Unit</p>
+<blockquote>
+<p>将data存入currentBuffer（ArrayBuffer类型）</p>
+</blockquote>
+</li>
+<li><p>updateCurrentBuffer()</p>
+<blockquote>
+<p>将currentBuffer中的数据构造成Block（使用time做block的uniq id），然后重新构造新的currentBuffer，将Block push 到blocksForPushing 队列（后续有线程不停处理该队列中的block）</p>
+</blockquote>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">updateCurrentBuffer</span></span>(time: <span class="type">Long</span>): <span class="type">Unit</span> = &#123;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">      <span class="keyword">var</span> newBlock: <span class="type">Block</span> = <span class="literal">null</span></div><div class="line">      synchronized &#123;</div><div class="line">        <span class="keyword">if</span> (currentBuffer.nonEmpty) &#123;</div><div class="line">          <span class="keyword">val</span> newBlockBuffer = currentBuffer</div><div class="line">          currentBuffer = <span class="keyword">new</span> <span class="type">ArrayBuffer</span>[<span class="type">Any</span>]</div><div class="line">          <span class="keyword">val</span> blockId = <span class="type">StreamBlockId</span>(receiverId, time - blockIntervalMs)</div><div class="line">          listener.onGenerateBlock(blockId)</div><div class="line">          newBlock = <span class="keyword">new</span> <span class="type">Block</span>(blockId, newBlockBuffer)</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">      <span class="keyword">if</span> (newBlock != <span class="literal">null</span>) &#123;</div><div class="line">        blocksForPushing.put(newBlock)  <span class="comment">// put is blocking when queue is full</span></div><div class="line">      &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>keepPushingBlocks（）</p>
+<blockquote>
+<p>从blocksForPushing队列中不停地取block，然后处理block。</p>
+<p>处理block可分为2个步骤：</p>
+<ol>
+<li>将block添加进worker本地的BlockManager中</li>
+<li>将blockInfo发送到Driver的ReceiverTracker，至此Driver就能感知外部数据了</li>
+</ol>
+</blockquote>
+</li>
+<li><p>2个线程之blockIntervalTimer</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">val</span> blockIntervalTimer =</div><div class="line">  <span class="keyword">new</span> <span class="type">RecurringTimer</span>(clock, blockIntervalMs, updateCurrentBuffer, <span class="string">"BlockGenerator"</span>)</div></pre></td></tr></table></figure>
+<p> 该Timer会启一个线程，周期性的（默认间隔为200ms）调用updateCurrentBuffer</p>
+</li>
+<li><p>2个线程之blockPushingThread，调用keepPushingBlocks</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">val</span> blockPushingThread = <span class="keyword">new</span> <span class="type">Thread</span>() &#123; <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">run</span></span>() &#123; keepPushingBlocks() &#125; &#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>ReceiverSupervisorImpl.start()  //回到该方法，继续分析</p>
+<ul>
+<li><p>onStart()</p>
+<blockquote>
+<p>BlockGenerator.start()，做好接收外部数据的准备，外部数据会存放在BlockGenerator的currentBuffer中</p>
+</blockquote>
+</li>
+<li><p>onReceiverStart()</p>
+<blockquote>
+<p>向Driver端的ReceiverTracker注册Receiver</p>
+</blockquote>
+</li>
+<li><p>receiver.onStart()</p>
+<blockquote>
+<p>即 ReceiverInputDStream.getReceiver().onStart()，用于实际接收外部数据，传递外部数据到BlockGenerator.addData</p>
+<p>例如MQTTReceiver.onStart()执行流程: 创建MQTT连接，接收topic，将接收到的message存入BlockGenerator.currentBuffer</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>至此，ReceiverTracker 接收外部数据的流程分析完毕，总结为</p>
+<blockquote>
+<ol>
+<li>Driver端的ReceiverTracker 启动Spark Job</li>
+<li>worker上调用MQTTReceiver.onStart() 接收外部MQTT数据，并存入BlockGenerator.currentBuffer</li>
+<li>BlockGenerator周期性将currentBuffer构造成Block，并同步BlockInfo到Driver的ReceiverTracker</li>
+<li>ReceiverTracker能感知Blocks</li>
+</ol>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>JobGenerator</p>
+<ul>
+<li><p>GenerateJobs</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">val</span> timer = <span class="keyword">new</span> <span class="type">RecurringTimer</span>(clock, ssc.graph.batchDuration.milliseconds,</div><div class="line">  longTime =&gt; eventLoop.post(<span class="type">GenerateJobs</span>(<span class="keyword">new</span> <span class="type">Time</span>(longTime))), <span class="string">"JobGenerator"</span>)</div></pre></td></tr></table></figure>
+<p>JobGenerator.start() 后，周期性（周期为构造StreamingContext时传入的batch时间参数）调用GenerateJobs。</p>
+<p>generateJobs执行步骤：</p>
+<ol>
+<li><p>ReceiverTracker.allocateBlocksToBatch()</p>
+<blockquote>
+<p>收集当前batch下，各inputStream产生的BlockInfos</p>
+</blockquote>
+</li>
+<li><p>createBlockRDD(validTime, blockInfos)</p>
+<blockquote>
+<p>根据上述BlockInfos 创建BlockRDD</p>
+</blockquote>
+</li>
+<li><p>构造jobFunction 与 job</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">getOrCompute(time) <span class="keyword">match</span> &#123;</div><div class="line">  <span class="keyword">case</span> <span class="type">Some</span>(rdd) =&gt; &#123;</div><div class="line">    <span class="keyword">val</span> jobFunc = () =&gt; &#123;</div><div class="line">      <span class="keyword">val</span> emptyFunc = &#123; (iterator: <span class="type">Iterator</span>[<span class="type">T</span>]) =&gt; &#123;&#125; &#125;</div><div class="line">      context.sparkContext.runJob(rdd, emptyFunc)</div><div class="line">    &#125;</div><div class="line">    <span class="type">Some</span>(<span class="keyword">new</span> <span class="type">Job</span>(time, jobFunc))</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">case</span> <span class="type">None</span> =&gt; <span class="type">None</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p> Job.run() 就是直接调用jobFunc()，运行新的Spark Job，处理rdd</p>
+</li>
+<li><p>将Job封装成JobSet，丢给线程池（默认一个线程）去实际执行job.run</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jobSet.jobs.foreach(job =&gt; jobExecutor.execute(<span class="keyword">new</span> <span class="type">JobHandler</span>(job)))</div></pre></td></tr></table></figure>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>总结</p>
+<ol>
+<li><p>启动独立的Spark Job用于接收外部数据。worker 接收外部数据，周期性(与batch值无关，默认200ms)封装成Block，存入Spark内存中，并将BlockInfo同步给Driver。 </p>
+<blockquote>
+<p>实际执行Class：BlockGenerator</p>
+</blockquote>
+</li>
+<li><p>Driver周期性（batch值）根据BlockInfos生成BlockRDD，根据RDD构造Spark Job，并执行。</p>
+</li>
+</ol>
+<p>​</p>
+<p>​</p>
+<p>​</p>
+</li>
+</ul>
+<p>   下面以一个简单Streaming Python程序为例，分析Spark Streaming程序处理流程。</p>
+<p>​    Steaming程序通常包括如下步骤：</p>
+<ul>
+<li><p>StreamingContext 初始化</p>
+<blockquote>
+<p>ssc = StreamingContext(sc,5)</p>
+</blockquote>
+</li>
+<li><p>创建streaming</p>
+<blockquote>
+<p>lines = MQTTUtils.createStream(ssc, brokerUrl, topics)</p>
+</blockquote>
+</li>
+<li><p>处理streaming</p>
+<blockquote>
+<p>topic_rdd = lines.map(lambda x : get_topic_rdd(x))</p>
+</blockquote>
+</li>
+<li><p>启动streaming</p>
+<blockquote>
+<p>ssc.start()</p>
+</blockquote>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">sc = SparkContext(conf=conf)</div><div class="line">ssc = StreamingContext(sc,<span class="number">5</span>)</div><div class="line">lines = MQTTUtils.createStream(ssc, brokerUrl, topics)</div><div class="line">topic_rdd = lines.map(<span class="keyword">lambda</span> x : get_topic_rdd(x))</div><div class="line">ssc.start()</div><div class="line">ssc.awaitTermination()</div></pre></td></tr></table></figure>
+<h4 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h4><ul>
+<li>StreamingContext<ul>
+<li>​</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/02/hello-world/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -416,7 +759,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">2</span>
                 <span class="site-state-item-name">Artikel</span>
               </a>
             </div>
