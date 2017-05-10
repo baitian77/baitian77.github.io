@@ -1,0 +1,962 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="ElasticSearch," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="小骑士" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="ElasticSearch调研总结ElasticSearch简介​    Elasticsearch 是一个分布式可扩展的实时搜索和分析引擎,一个建立在全文搜索引擎 Apache Lucene(TM) 基础上的搜索引擎。ElasticSearch可以做的事儿:  分布式的实时文件存储，并为每一个字段建立索引，默认存储在本地磁盘 实时分析的分布式搜索引擎 集群规模可以动态扩展，具备分布式的基本要求：">
+<meta name="keywords" content="ElasticSearch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ElasticSearch调研总结">
+<meta property="og:url" content="http://yoursite.com/2017/05/10/ElasticSearch调研总结/index.html">
+<meta property="og:site_name" content="小骑士">
+<meta property="og:description" content="ElasticSearch调研总结ElasticSearch简介​    Elasticsearch 是一个分布式可扩展的实时搜索和分析引擎,一个建立在全文搜索引擎 Apache Lucene(TM) 基础上的搜索引擎。ElasticSearch可以做的事儿:  分布式的实时文件存储，并为每一个字段建立索引，默认存储在本地磁盘 实时分析的分布式搜索引擎 集群规模可以动态扩展，具备分布式的基本要求：">
+<meta property="og:updated_time" content="2017-05-10T09:39:22.961Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ElasticSearch调研总结">
+<meta name="twitter:description" content="ElasticSearch调研总结ElasticSearch简介​    Elasticsearch 是一个分布式可扩展的实时搜索和分析引擎,一个建立在全文搜索引擎 Apache Lucene(TM) 基础上的搜索引擎。ElasticSearch可以做的事儿:  分布式的实时文件存储，并为每一个字段建立索引，默认存储在本地磁盘 实时分析的分布式搜索引擎 集群规模可以动态扩展，具备分布式的基本要求：">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/05/10/ElasticSearch调研总结/"/>
+
+
+
+
+
+  <title>ElasticSearch调研总结 | 小骑士</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">小骑士</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">subtitle</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/10/ElasticSearch调研总结/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="knightyang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="小骑士">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                ElasticSearch调研总结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-10T17:37:53+08:00">
+                2017-05-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ElasticSearch/" itemprop="url" rel="index">
+                    <span itemprop="name">ElasticSearch</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="ElasticSearch调研总结"><a href="#ElasticSearch调研总结" class="headerlink" title="ElasticSearch调研总结"></a>ElasticSearch调研总结</h3><h4 id="ElasticSearch简介"><a href="#ElasticSearch简介" class="headerlink" title="ElasticSearch简介"></a>ElasticSearch简介</h4><p>​    Elasticsearch 是一个分布式可扩展的<strong>实时</strong>搜索和分析引擎,一个建立在全文搜索引擎 Apache Lucene(TM) 基础上的搜索引擎。ElasticSearch可以做的事儿:</p>
+<ul>
+<li>分布式的实时文件存储，并为每一个字段建立索引，默认存储在本地磁盘</li>
+<li>实时分析的分布式搜索引擎</li>
+<li>集群规模可以动态扩展，具备分布式的基本要求：动态扩展、容错、负载均衡</li>
+</ul>
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><ul>
+<li><p>Cluster (集群)</p>
+</li>
+<li><p>Node (节点)</p>
+<blockquote>
+<p>每个节点上运行一个ElasticSearch实例，节点启动后会自动广播查询，配置信息中cluster.name值相同的节点会构造成一个集群</p>
+</blockquote>
+</li>
+<li><p>Shard (分片)</p>
+<blockquote>
+<p>类似HDFS中的block，会将大容量的数据切分成多个Shard，不同的Shard可以分散存储在集群上不同的节点</p>
+</blockquote>
+</li>
+<li><p>Replia (副本)</p>
+<blockquote>
+<p>一个Replia是一个Shard的精准复制，每个Shard可含有0个或多个Replia。用于容错、并发查询</p>
+</blockquote>
+</li>
+<li><p>面向文档</p>
+<p>​    ElasticSearch是面向文档存储的，基本的存储单位就是文档，一条记录就是一个文档，文档格式统一为JSON格式，例如：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"name"</span> :     <span class="string">"John"</span>,</div><div class="line">    <span class="attr">"sex"</span> :      <span class="string">"Male"</span>,</div><div class="line">    <span class="attr">"age"</span> :      <span class="number">25</span>,</div><div class="line">    <span class="attr">"birthDate"</span>: <span class="string">"1990/05/01"</span>,</div><div class="line">    <span class="attr">"about"</span> :    <span class="string">"I love to go rock climbing"</span>,</div><div class="line">    <span class="attr">"interests"</span>: [ <span class="string">"sports"</span>, <span class="string">"music"</span> ]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>index (索引)、type (类型)、id </p>
+<p>ES中通过index/type/id 来唯一标示一个文档。与Mysql概念对比：</p>
+<p>| Mysql         | ES                  |<br>| ————- | ——————- |<br>| database(数据库) | index(索引)           |<br>| table(表)      | type(类型)            |<br>| row(行)        | 文档                  |<br>| column(列)     | field               |<br>| schema        | mapping             |<br>| index         | everything is index |<br>| sql           | Query DSL           |</p>
+</li>
+<li><p>Query DSL</p>
+<p>Mysql 中采用SQL语句进行查询，ES中统一采用Query DSL查询，详情可参考：<a href="http://www.voidcn.com/blog/bigbigtreewhu/article/p-6323823.html" target="_blank" rel="external">Elasticsearch——Query DSL</a>。<code>select * from bank;</code> 示例：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">curl -XPOST 'localhost:9200/bank/_search?pretty' -d '</div><div class="line">&#123;</div><div class="line">  "query": &#123; "match_all": &#123;&#125; &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="集群搭建"><a href="#集群搭建" class="headerlink" title="集群搭建"></a>集群搭建</h4><ul>
+<li><p>版本选择与下载、解压，<a href="[http://www.elasticsearch.org/download/](http://www.elasticsearch.org/download/">下载地址</a> )</p>
+<ul>
+<li><strong>Note:  调研版本选择的是2.4.1，而非最新版本5.*</strong>(版本号2.4之后就直接是5.* )，原因：<ul>
+<li>5.<em> 要求JAVA8，5.</em> 官方插件也要求JAVA8</li>
+<li>很多常用的第三方插件（bigdesk、head、sql、jdbc-sql）还未支持5.*</li>
+<li>2.4 与 5.* 性能实测差异不大，详见<a href="http://www.ctolib.com/topics/79270.html" target="_blank" rel="external">ElasticSearch 5.0 测评以及使用体验</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>配置所有节点，将$ES_HOME/elasticsearch.yml中cluster.name 修改成相同值</p>
+</li>
+<li><p>$ES_HOME/bin/elasticsearch</p>
+<blockquote>
+<p>所有节点上执行执行，就启动了ES。会自动广播组成集群。</p>
+</blockquote>
+<p>JVM默认参数：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-Xms256m -Xmx1g -Djava.awt.headless=true -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+HeapDumpOnOutOfMemoryError -XX:+DisableExplicitGC -Dfile.encoding=UTF-8 -Djna.nosys=true</div></pre></td></tr></table></figure>
+</li>
+<li><p>集群访问地址：host:9200</p>
+<blockquote>
+<p><a href="http://200.200.200.64:9200/" target="_blank" rel="external">http://200.200.200.64:9200/</a></p>
+</blockquote>
+</li>
+<li><p>插件安装</p>
+<ul>
+<li><p>Note：ES安装包只提供了最基本的功能：本地分布式存储数据、创建索引、提供查询服务等。其余一些额外功能则需要第三方插件支持，如：集群状态监控、SQL转DSL Query、集群性能监控、Mysql数据导入ES等。详见：<a href="http://chenghuiz.iteye.com/blog/2310377" target="_blank" rel="external">elasticsearch以及其常用插件安装</a></p>
+</li>
+<li><p>访问(host:9200/_plugin/plugin<em>name)</em>，例如:</p>
+<blockquote>
+<p><a href="http://200.200.200.64:9200/_plugin/head/" target="_blank" rel="external">http://200.200.200.64:9200/_plugin/head/</a></p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h4><ul>
+<li><p>将Mysql单表中的数据导入ES</p>
+<ul>
+<li><p>Mysql单表数据量：1亿行，16GB；导入ES后，占用内存：32GB</p>
+<ul>
+<li><strong>Note：第一次导入完成后，发现数据丢失，即从Mysql导入一亿行数据后，ES中count(*)仅有7600万行，后续会有原因分析</strong></li>
+</ul>
+</li>
+<li><p>导入方法：</p>
+<ul>
+<li><p>安装第三方插件：elasticsearch-jdbc，按照git上的操作指引进行数据导入，git地址：<a href="https://github.com/jprante/elasticsearch-jdbc" target="_blank" rel="external">elasticsearch-jdbc</a>，导入脚本：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span>!/bin/sh</div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>安装bigdesk插件，监控集群资源状态（Memory、CPU、GC、Thread Pool等）</p>
+<blockquote>
+<p>用于查看执行SQL时的资源消耗</p>
+</blockquote>
+</li>
+<li><p>安装sql插件，可方便的将sql转换成DSL Query</p>
+<blockquote>
+<p>SQL:  select count(*) from yqj_info_index_more</p>
+</blockquote>
+</li>
+<li><p>安装head插件，可以方便的提交DSL Query</p>
+</li>
+<li><p>count(*) 统计一亿行数据耗时对比（清理查询缓存后多次执行，取平均值）</p>
+<p>| Mysql | ES    |<br>| —– | —– |<br>| 51秒   | 900毫秒 |</p>
+<blockquote>
+<p>Note: Mysql 执行时间波动较大，从31秒 ~ 80秒，预计于机器负载有关。ES执行时间基本无波动。</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="Mysql导入ES丢数据原因分析"><a href="#Mysql导入ES丢数据原因分析" class="headerlink" title="Mysql导入ES丢数据原因分析"></a>Mysql导入ES丢数据原因分析</h4><ul>
+<li><p>导入过程：同性能测试中的导入方法</p>
+</li>
+<li><p>原因分析：</p>
+<ul>
+<li><p>ES中是否含有重复 _id？</p>
+<ul>
+<li>没有。ES中采用Mysql表的单一主键值做_id，<strong>不会出现重复</strong></li>
+</ul>
+</li>
+<li><p>Mysql数据中是否有row含有特殊字段？（比如string太长、含有特殊编码字符等）</p>
+<ul>
+<li>没有。二分查找，找到ES中丢失的一些具体数据，数据本身并没有什么特殊</li>
+</ul>
+</li>
+<li><p>分析Mysql数据导入ES的第三方插件源码: elasticsearch-jdbc</p>
+<ul>
+<li><p>日志中含有出错信息</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[<span class="number">15</span>:<span class="number">28</span>:<span class="number">15</span>,<span class="number">983</span>][ERROR][org.xbib.elasticsearch.helper.client.BulkTransportClient][elasticsearch[importer][listener][T<span class="comment">#4]] bulk [45] failed with 8020 failed items, failure message = failure in bulk execution:</span></div><div class="line">[<span class="number">0</span>]: index [yqj_info_index_more], type [yqj_info_type_more], id [<span class="number">11598123</span>], message [RemoteTransportException[[Leader][ip:<span class="number">9300</span>][indices:data/write/bulk[s][p]]]; nested: EsRejectedExecutionException[rejected execu</div><div class="line">tion of org.elasticsearch.transport.TransportService$<span class="number">4</span>@<span class="number">7691</span>eb0a on EsThreadPoolExecutor[bulk, queue capacity = <span class="number">50</span>, org.elasticsearch.common.util.concurrent.EsThreadPoolExecutor@c2f9664[Running, pool size = <span class="number">8</span>, active threads</div><div class="line">= <span class="number">8</span>, queued tasks = <span class="number">50</span>, completed tasks = <span class="number">21008</span>]]];]</div></pre></td></tr></table></figure>
+</li>
+<li><p>出错原因：导入程序向ES发送数据的速率太快了，超过ES的处理能力。</p>
+</li>
+<li><p>解决办法：</p>
+<ol>
+<li>降低导入程序的发送速率 or</li>
+<li>增大ES接收数据的线程池数量、缓存队列的size</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="elasticsearch-jdbc-原理分析"><a href="#elasticsearch-jdbc-原理分析" class="headerlink" title="elasticsearch-jdbc 原理分析"></a>elasticsearch-jdbc 原理分析</h4><ul>
+<li><p>git地址：<a href="https://github.com/jprante/elasticsearch-jdbc" target="_blank" rel="external">elasticsearch-jdbc</a></p>
+</li>
+<li><p>处理时序图：</p>
+</li>
+<li><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">title: elasticseach-jdbc时序图</div><div class="line">Runner.main()-&gt; JDBCImport.execute(): 1. 开始向ES导入数据</div><div class="line">Note right of JDBCImport.execute():  启动一个ExecutorServer\n默认线程数为1</div><div class="line">JDBCImport.execute()-&gt; Context.execute(): 2. JDBCImport中构造上下文context\n包含Source(mysql)、Sink(ES)</div><div class="line">Context.execute() -&gt; Context.beforeFetch(): 3. 创建Source、Sink，设置相关参数</div><div class="line">Context.beforeFetch() -&gt; Sink.beforeFetch(): 4. 创建BulkTransportClient，处理fetch前的准备工作\n如：创建ES索引</div><div class="line">Context.beforeFetch() -&gt; Source.beforeFetch(): 5. 这里直接返回</div><div class="line">Context.execute() --&gt; Source.fetch(): 6. 开始fetch数据了</div><div class="line">Source.fetch() -&gt; Source.executeQuery(): 7. 通过JDBC执行SQL</div><div class="line">Source.executeQuery() -&gt; Source.fetch(): 8. 返回SQL结果的迭代器\n</div><div class="line">Source.fetch() -&gt; Source.processRow(): 9. 遍历处理每一行数据\n给数据加上ES的元数据\n如index、type、_id、version等</div><div class="line">Source.processRow() -&gt; Sink.index(): 10. 将数据丢给Sink，构造成IndexRequest，缓存\n当缓存的IndexRequest数量达到一定阈值(10000)\n或经过一定时间后，将这批Request构造成BulkRequest</div><div class="line">Sink.index() -&gt; BulkRequestHandler.execute(): 11. 将BulkRequest经底层Netty发送给ES Server\n若ES处理Failed，log the message</div></pre></td></tr></table></figure>
+</li>
+<li><p>关键步骤</p>
+<ul>
+<li><p>JDBCImport中构造上下文context：包含Source(mysql)、Sink(ES)</p>
+</li>
+<li><p>Sink初始化，创建BulkTransportClient，处理fetch前的准备工作</p>
+<ul>
+<li><p>如：创建ES索引、设定缓存IndexRequest的阈值，同时处理的BulkRequest最大数量</p>
+<blockquote>
+<p>Note:  ES处理BulkRequest的线程池默认最大线程数为8，Request缓存队列上线值为50。</p>
+<p>若缓存队列满了，还有Request过来就直接抛异常拒绝访问了。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>Source中调用JDBC执行SQL，获取SQL结果的迭代器，遍历处理每一行</p>
+<ul>
+<li>若SQL结果字段名有与ES Control key同名时，就用该字段值替代ES meta。</li>
+<li>例如：SQL结果含有字段_id，就将字段值设定为ES存储的文档id</li>
+</ul>
+</li>
+<li><p>Sink将每一行数据封装成IndexRequest，并缓存、处理</p>
+<ul>
+<li>当缓存的IndexRequest数量达到阈值（10000），将缓存的所有IndexRequest封装成BulkRequest，netty发送给ES Server</li>
+<li>当定时线程到期后（默认设定为30秒），就将当前缓存的所有IndexReques封装成BulkRequest，发送给ES Server</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="ES-处理BulkRequest的流程"><a href="#ES-处理BulkRequest的流程" class="headerlink" title="ES 处理BulkRequest的流程"></a>ES 处理BulkRequest的流程</h4><ul>
+<li><p>ES启动时，NettyTransport会创建Netty的ServerBootstrap，默认监听端口9300-9400</p>
+</li>
+<li><p>接收message时，调用ChannelPipeline的ChannelUpStreamHandler依次处理，关键处理类：<code>MessageChannelHandler</code></p>
+</li>
+<li><p>ES启动时，会注册很多action -&gt; RequestHandler，当收到BulkRequest，调用HandledTransportAction进行处理（action为“data/write/bulk”）</p>
+</li>
+<li><p>一系列调用后，转到TransportBulkAction.doExecute，根据index分组，若index不存在，会自动创建</p>
+</li>
+<li><p>TransportBulkAction.executeBulk() 将所有的IndexRequest取出，根据shard分组，构造BulkShardRequest</p>
+<ul>
+<li>属于同一shard的，都将存储在一起；给IndexRequest分配shard，似乎只是简单轮询</li>
+</ul>
+</li>
+<li><p>遍历BulkShardRequest，调用TransportReplicationAction.doExecute()，Reroute阶段开始（就是将Request发送到Shard所在node）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">doExecute</span><span class="params">(Task task, Request request, ActionListener&lt;Response&gt; listener)</span> </span>&#123;</div><div class="line">	<span class="keyword">new</span> ReroutePhase((ReplicationTask) task, request, listener).run();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>从Bulk线程池取出线程处理这个Request，后续存储、建索引过程还未分析</p>
+<ul>
+<li>默认线程数：8 。Min(处理器核数, 32) </li>
+<li>会有个BlockQueue对应这个线程池，若没空闲线程，就将request丢队列，若队列没位置就拒绝这个request</li>
+</ul>
+</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ul>
+<li>ElasticSearch自身安装简单，但是好些功能（如集群监控、SQL转 DSL Query等）依赖第三方插件<ul>
+<li>但是第三方插件稳定性有待商榷。如：Mysql导入ES的插件可能丢失数据（插入失败后未重试）</li>
+</ul>
+</li>
+<li>ElasticSearch能满足实时查询的需求，查询耗时也满足需求，硬件资源消耗也可接受<ul>
+<li>一亿级的数据量，count(*)耗时1秒左右</li>
+<li>1GB的内存就能顺畅跑起来，执行查询时JVM内存也未见明显波动</li>
+</ul>
+</li>
+</ul>
+<h4 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h4><ul>
+<li><a href="http://i.zhcy.tk/blog/elasticsearchyu-solr/" target="_blank" rel="external">搜索引擎选择： Elasticsearch与Solr的调研文档</a></li>
+<li><a href="http://www.ctolib.com/topics/79270.html" target="_blank" rel="external">ElasticSearch 5.0 测评以及使用体验</a></li>
+<li><a href="http://blog.pengqiuyuan.com/ji-chu-jie-shao-ji-suo-yin-yuan-li-fen-xi/" target="_blank" rel="external">Elasticsearch－基础介绍及索引原理分析</a></li>
+<li><a href="http://blog.csdn.net/laoyang360/article/details/52244917" target="_blank" rel="external">Elasticsearch学习，请先看这一篇！</a></li>
+<li><a href="http://blog.csdn.net/laoyang360/article/details/52227541" target="_blank" rel="external">Elasticsearch的使用场景深入详解</a></li>
+<li><a href="http://www.voidcn.com/blog/bigbigtreewhu/article/p-6323823.html" target="_blank" rel="external">Elasticsearch——Query DSL</a></li>
+<li><a href="https://my.oschina.net/jhao104/blog/644909" target="_blank" rel="external">Elasticsearch笔记(一)—Elasticsearch安装配置</a></li>
+<li><a href="http://chenghuiz.iteye.com/blog/2310377" target="_blank" rel="external">elasticsearch以及其常用插件安装</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ElasticSearch/" rel="tag"># ElasticSearch</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/03/SparkStreaming处理流程/" rel="next" title="Spark Streaming处理流程源码走读">
+                <i class="fa fa-chevron-left"></i> Spark Streaming处理流程源码走读
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="knightyang" />
+          <p class="site-author-name" itemprop="name">knightyang</p>
+           
+              <p class="site-description motion-element" itemprop="description">description</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#ElasticSearch调研总结"><span class="nav-number">1.</span> <span class="nav-text">ElasticSearch调研总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ElasticSearch简介"><span class="nav-number">1.1.</span> <span class="nav-text">ElasticSearch简介</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基本概念"><span class="nav-number">2.</span> <span class="nav-text">基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#集群搭建"><span class="nav-number">2.1.</span> <span class="nav-text">集群搭建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#性能测试"><span class="nav-number">2.2.</span> <span class="nav-text">性能测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mysql导入ES丢数据原因分析"><span class="nav-number">2.3.</span> <span class="nav-text">Mysql导入ES丢数据原因分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#elasticsearch-jdbc-原理分析"><span class="nav-number">2.4.</span> <span class="nav-text">elasticsearch-jdbc 原理分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ES-处理BulkRequest的流程"><span class="nav-number">2.5.</span> <span class="nav-text">ES 处理BulkRequest的流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">2.6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考资料"><span class="nav-number">2.7.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">knightyang</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

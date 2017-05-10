@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2017/05/10/ElasticSearch%E8%B0%83%E7%A0%94%E6%80%BB%E7%BB%93/</loc>
+    
+    <lastmod>2017-05-10T09:39:22.961Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2017/05/03/SparkStreaming%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B/</loc>
     
     <lastmod>2017-05-03T02:17:34.120Z</lastmod>
