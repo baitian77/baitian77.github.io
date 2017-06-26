@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-05-10T09:39:22.961Z</updated>
+  <updated>2017-06-26T10:00:35.962Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,186 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>用Elasticsearch处理SQL查询</title>
+    <link href="http://yoursite.com/2017/06/26/%E7%94%A8Elasticsearch%E5%A4%84%E7%90%86SQL%E6%9F%A5%E8%AF%A2/"/>
+    <id>http://yoursite.com/2017/06/26/用Elasticsearch处理SQL查询/</id>
+    <published>2017-06-26T09:59:54.584Z</published>
+    <updated>2017-06-26T10:00:35.962Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="用Elasticsearch处理SQL查询"><a href="#用Elasticsearch处理SQL查询" class="headerlink" title="用Elasticsearch处理SQL查询"></a>用Elasticsearch处理SQL查询</h2><h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>最近碰到个需求：业务方mysql单机查询耗时无法满足需求、部分sql查询不出来，希望能提供个实时查询框架解决这个问题，最好是分布式的，好扩展嘛。（PS：最开始产品经理聊时，提到mysql 库表太大、单表count(<em>)都不能出结果。目测单表数据量估计快10亿了，结果后来和业务后台开发核对细节时，发现单表数据量最多也就百万级，最慢sql也就耗时几秒，哪儿有撒count(</em>)不出结果的，也是醉了，还是得多和搞技术的交流啊。真实需求是百万级数据量需要查询耗时毫秒级）</p>
+<p>调研了各种实时查询框架：Elasticsearch、druid、phoenix、solr、impala，最终选定了Elasticsearch，<strong>版本5.4.0</strong>。原因简单来说：ES更简单、更快，当然缺点是对join的支持也不好、没有分区的概念。</p>
+<p>本文主要聊聊如何用ES处理SQL业务，碰到的问题、解决版本。不会涉及ES的基本概念。</p>
+<p>主要聊聊：</p>
+<ul>
+<li>ES文档结构设计</li>
+<li>Mysql数据如何导入ES</li>
+<li>写ES Query DSL中碰到的问题</li>
+</ul>
+<h3 id="文档结构的设计"><a href="#文档结构的设计" class="headerlink" title="文档结构的设计"></a>文档结构的设计</h3><p>  在文档结构设计上尝试了2种方案：</p>
+<h5 id="方案1：将ES当关系数据库使，数据库表结构与ES文档结构一一对应。-参考系列文章：把Elasticsearch-当数据库使"><a href="#方案1：将ES当关系数据库使，数据库表结构与ES文档结构一一对应。-参考系列文章：把Elasticsearch-当数据库使" class="headerlink" title="方案1：将ES当关系数据库使，数据库表结构与ES文档结构一一对应。 参考系列文章：把Elasticsearch 当数据库使"></a>方案1：将ES当关系数据库使，数据库表结构与ES文档结构一一对应。 参考系列文章：<a href="https://segmentfault.com/a/1190000004433446" target="_blank" rel="external">把Elasticsearch 当数据库使</a></h5><p>简单说，就是对于数据库中的每一个表，都在ES中创建一个type（类似数据库里的表），ES type里的feild 名称/类型  与数据库表的字段名/类型 保持一致。</p>
+<p>建表简单、mysql数据导入ES也简单，但是将SQL转换成ES Query DSL时 碰到一系列问题：</p>
+<ul>
+<li><p>问题一：ES Join支持不好</p>
+<ul>
+<li><p><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/relations.html" target="_blank" rel="external">ES处理join的几种方式</a>（select * from tbl1 join tbl2 on tbl1.id = tbl2.id;）</p>
+<ul>
+<li><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/application-joins.html" target="_blank" rel="external">应用层联接</a><ul>
+<li>ES转换成<ul>
+<li>执行 select id, * from tbl1; 结果存数组变量tbl1_id_array</li>
+<li>执行 select * from tbl2 where id in [tbl1_id_array]</li>
+<li>结果再拼接</li>
+</ul>
+</li>
+<li>适用于tbl1的数据量很小 </li>
+</ul>
+</li>
+<li><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/denormalization.html" target="_blank" rel="external">表字段冗余</a><ul>
+<li>ES 在建表时，将table1的信息冗余存入tabl2</li>
+</ul>
+</li>
+<li><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/nested-objects.html" target="_blank" rel="external">嵌套对象</a> <ul>
+<li>比如SQL里 一个表存储所有文章，一个表存储所有评论，评论表中存储文章id，通过join能查找一篇文章的所有评论</li>
+<li>ES 可以只创建一个表，每篇文章里存储所有的评论，来规避join</li>
+</ul>
+</li>
+<li><a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/parent-child.html" target="_blank" rel="external">父-子关系文档</a><ul>
+<li>ES 需要在设计表的时候  就指定好2表之间的关系</li>
+<li>可以处理2张表都很大的情况，但是需要在创建表的时候就建立join关系，不大实用</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>其他资料</p>
+<ul>
+<li><a href="https://segmentfault.com/a/1190000004468130" target="_blank" rel="external">把Elasticsearch当数据库使：Join</a> </li>
+</ul>
+</li>
+<li><p>Join总结</p>
+<ul>
+<li>ES不太适合关系数据库的join。ES JOin只会返回单表的数据，Mysql Join 会返回左右2表的数据。另外join又分为left join、right join、inner join等等，ES得用户处理这些join逻辑，不大方便。</li>
+</ul>
+</li>
+<li><p>问题二：Union ALL、子查询不支持</p>
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="方案2：将Mysql的库表结构转换成ES容易处理的文档结构"><a href="#方案2：将Mysql的库表结构转换成ES容易处理的文档结构" class="headerlink" title="方案2：将Mysql的库表结构转换成ES容易处理的文档结构"></a>方案2：将Mysql的库表结构转换成ES容易处理的文档结构</h5><p> 简单说，就是通过新的文档结构查询时，不再需要join、union all、子查询了。</p>
+<p> 不过这个设计过程就比较痛苦了，需要比较深入的了解业务库表结构，各种摸爬滚打后，将库表结构转换成2种ES文档结构：</p>
+<ul>
+<li><p>由单个mysql表构成</p>
+<ul>
+<li><p>普通文档</p>
+<ol>
+<li>ES字段与mysql字段的名字、类型保持一致</li>
+<li><p>若mysql表含有主键，就将主键作为ES的_id</p>
+<blockquote>
+<p>例如: mysql table 主键为(col1, col2)，则可将col1_col2作为ES的_id</p>
+</blockquote>
+</li>
+<li><p>若mysql表里没有主键，则视情况由ES自动生成_id 或者用别的方式</p>
+</li>
+</ol>
+</li>
+<li>父文档<ul>
+<li>mysql里必须含有主键，并将主键值作为ES文档的_id值</li>
+</ul>
+</li>
+<li>子文档<ul>
+<li>mysql表里必须要有父文档_id对应的字段<blockquote>
+<p>例如 父文档为school，_id为”school_id”对应的值，那子文档class里必须存有字段”school_id”</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>由多个mysql表构成</p>
+<ul>
+<li>确定唯一的main table。其余表数据会与该表有关联。</li>
+<li>确定其余副表是作为ES的nested common field 还是 nested array field。即主表的一行记录在副本中是最多有一行对应数据、还是多行对应数据。</li>
+</ul>
+</li>
+<li><p>例子：ES device表的设计过程</p>
+<ul>
+<li><p>确定由哪些表构成。device表包含mysql的七张表:      </p>
+<ul>
+<li>tb_device_mac (device_id, product_id, status)</li>
+<li>tb_device_mac_history (device_id, mac_address, status)</li>
+<li>tb_device_auth (devce_id, user_id, auth_time)</li>
+<li>tb_device_auth_history (devce_id, user_id, auth_time)</li>
+<li>tb_device_bind (device_id, bind_time)</li>
+<li>tb_device_bind_history (device_id, bind_time, unbind_time)</li>
+<li>tb_product (product_id, product_name)</li>
+</ul>
+</li>
+<li><p>确定主表: tb_device_mac</p>
+</li>
+<li>确定nested common field 对应的副表: tb_product</li>
+<li>表融合: 相似结构的表合并成一个字段: 如 tb_device_mac 和 tb_device_mac_history 在ES里用一个字段存储，即tb_device_mac 会冗余存储</li>
+<li><p>device ES 表结构</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">&quot;properties&quot;: &#123;</div><div class="line">    &quot;device_id&quot; : &#123;&#125;,  // 来自主表tb_device_mac的字段</div><div class="line">    &quot;mac_address&quot;: &#123;&#125;,</div><div class="line">    &quot;status&quot;: &#123;&#125;,</div><div class="line">    &quot;macs&quot;: &#123; // 包含来自tb_device_mac 和 tb_device_mac_history的字段</div><div class="line">        &quot;type&quot;: &quot;nested&quot;,</div><div class="line">        &quot;properties&quot;: &#123;</div><div class="line">            &quot;device_id&quot; : &#123;&#125;,</div><div class="line">            &quot;product_id&quot;: &#123;&#125;,</div><div class="line">            &quot;status&quot;: &#123;&#125;,</div><div class="line">            &quot;is_history&quot;: &#123;&quot;type&quot;: &quot;boolean&quot;&#125; // 新增字段</div><div class="line">        &#125;</div><div class="line">    &#125;,</div><div class="line">    &quot;auths&quot;: &#123;&#125; // 存储来自tb_device_auth 和 tb_dvice_auth_history的数据</div><div class="line">    &quot;binds&quot;: &#123;&#125; // 存储来自tb_device_bind 和 tb_device_bind_history的数据</div><div class="line">    &quot;product&quot;: &#123;&#125; //存储来自tb_product的数据</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>device 数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    &quot;device_id&quot;: 1,</div><div class="line">    &quot;mac_address&quot;: &quot;ABCDEFG&quot;,</div><div class="line">    &quot;status&quot;: 0,</div><div class="line">    &quot;macs&quot;: [ // tb_device_mac 与 (tb_device_mac union tb_device_mac_history) 是一对多关系，因此用数组存储</div><div class="line">        &#123;  // 来自tb_device_mac的数据会冗余存储一份在这里，便于处理tb_device_mac union all tb_device_mac_history 的数据</div><div class="line">            &quot;device_id&quot;: 1,</div><div class="line">            &quot;product_id&quot;: 12,</div><div class="line">            &quot;status&quot;: 0,</div><div class="line">            &quot;is_history&quot;: false</div><div class="line">        &#125;，</div><div class="line">        &#123;</div><div class="line">            &quot;device_id&quot;: 1,</div><div class="line">            &quot;product_id&quot;: 12,</div><div class="line">            &quot;status&quot;: 1,</div><div class="line">            &quot;is_history&quot;: true</div><div class="line">        &#125;</div><div class="line">    ],</div><div class="line">    &quot;binds&quot;: [&#123;...&#125;],</div><div class="line">    &quot;auths&quot;: [],</div><div class="line">    &quot;product&quot;: &#123; // tb_product与tb_device_mac是一对一关系，因此这里不用数组存储</div><div class="line">        &quot;product_id&quot;: 12,</div><div class="line">        &quot;product_nam&quot;: &quot;hello&quot;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>文档设计总结</p>
+<ul>
+<li>虽然方案2相比于方案1，在设计难度上更高，但是能有效的解决ES对join、uion all、子查询支持不好的问题。<blockquote>
+<p>Tips: 方案2将之前SQL join、子查询、union all设计到的表融合到ES的同一个文档中，能用简单Query DSL语句实现之前的复杂SQL</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="数据导入ES"><a href="#数据导入ES" class="headerlink" title="数据导入ES"></a>数据导入ES</h4><p>应业务方需求，现网数据的写入、更新方式不变。也就是依旧还是会把数据更新到Mysql，不会直接写ES，而仅仅是查询ES。所以，这边的有个机制，把Mysql上的更新操作实时的同步到ES。</p>
+<ul>
+<li>这里采用了阿里开源的canal监听mysql binlog</li>
+<li>将mysql insert、update、delete涉及的数据发Kafka，</li>
+<li>写了个ES程序从Kafka读数据，</li>
+<li>封装成ES的IndexRequest/UpdateRequest/DeleteRequest，批量处理(构造BulkRequest，设置批量阈值为1000)。</li>
+</ul>
+<p>ES同步程序里，会将mysql的部分insert请求，转换成ES的UpdateRequest，例如前文提到的文档结构device，mysql insert bind 会转换成 ES  update device.binds 。这个过程中竟然还导致ES服务器进程出现OutOfMemory，导致服务器进程异常退出。</p>
+<p>OutOfMemory原因分析：</p>
+<ul>
+<li>ES服务器采用默认JVM配置，JVM内存为2G，<code>-XX:+HeapDumpOnOutOfMemoryError</code>会自动dump内存，生成hprof文件。</li>
+<li><p>分析发现，85%以上的内存被BulkShardRequest.iterms占用，iterms里竟然大部分都是IndexRequest，而不是UpdateRequest!!!</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">Class Name                                                                                        | Shallow Heap | Retained Heap</div><div class="line">---------------------------------------------------------------------------------------------------------------------------------</div><div class="line">org.elasticsearch.action.bulk.BulkShardRequest @ 0xbf1945d0                                       |           64 | 1,654,253,216</div><div class="line">|- items org.elasticsearch.action.bulk.BulkItemRequest[1000] @ 0xbf194610                         |        4,016 | 1,654,253,152</div><div class="line">|  |- [736] org.elasticsearch.action.bulk.BulkItemRequest @ 0x8b9cb678                            |           32 |     1,968,936</div><div class="line">|  |  |- request org.elasticsearch.action.index.IndexRequest @ 0x8b7eab88                         |          120 |     1,968,792</div><div class="line">|  |  |  |- source org.elasticsearch.common.bytes.PagedBytesReference @ 0x8b9cb5d8                |           32 |     1,968,600</div><div class="line">|  |  |  |- opType org.elasticsearch.action.DocWriteRequest$OpType @ 0xafba9758                   |           32 |            88</div><div class="line">|  |  |  |- index java.lang.String @ 0xbf0bccd0  bigdata-realtime-v1                              |           24 |            80</div><div class="line">|  |  |  |- type java.lang.String @ 0xbf0bcd60  device                                            |           24 |            56</div><div class="line">|  |  |  |- id java.lang.String @ 0xbf0bcd98  1006685                                             |           24 |            56</div><div class="line">|  |  |  &apos;- Total: 13 entries                                                                     |              |              </div><div class="line">|  |  |- primaryResponse org.elasticsearch.action.bulk.BulkItemResponse @ 0x8b9cb698              |           32 |           112</div><div class="line">|  |  |- &lt;class&gt; class org.elasticsearch.action.bulk.BulkItemRequest @ 0xb1e7ded0                 |            8 |             8</div><div class="line">|  |  &apos;- Total: 3 entries                                                                         |              |              </div><div class="line">|  |- [737] org.elasticsearch.action.bulk.BulkItemRequest @ 0x8bbac2e0                            |           32 |     1,968,936</div><div class="line">|  |- [738] org.elasticsearch.action.bulk.BulkItemRequest @ 0x8bd8ce88                            |           32 |     1,968,936</div><div class="line"></div><div class="line">---------------------------------------------------------------------------------------------------------------------------------</div></pre></td></tr></table></figure>
+</li>
+<li><p>查看ES源码，UpdateRequest会转换成IndexRequest，而由于同一个设备(device)文档，内嵌的数据量高达3w多(device.binds为含有3w多元素的数组)，导致单个文档太大（3MB），不巧一个bulk里1000个UpdateRequest都是涉及这种文档的，最终导致OOM</p>
+</li>
+<li>解决办法：<ul>
+<li>调大ES JVM内存</li>
+<li>让业务查看数据是否引入脏数据，device.binds元素个数3000以内为正常</li>
+</ul>
+</li>
+</ul>
+<h4 id="SQL转换成Query-DSL"><a href="#SQL转换成Query-DSL" class="headerlink" title="SQL转换成Query DSL"></a>SQL转换成Query DSL</h4><p>这块改写比较简单，目前只碰到一个问题：</p>
+<ul>
+<li>ES 对于Count(distinct col) 采用基数估算，结果不精确，而业务方需要精确值<ul>
+<li>解决办法：改写成select col from tbl group by col，客户端再count</li>
+</ul>
+</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>杀鸡用了牛刀，可惜没用上ES核心功能（搜索引擎）。后续会考虑用ELK实现日志实时搜索框架。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;用Elasticsearch处理SQL查询&quot;&gt;&lt;a href=&quot;#用Elasticsearch处理SQL查询&quot; class=&quot;headerlink&quot; title=&quot;用Elasticsearch处理SQL查询&quot;&gt;&lt;/a&gt;用Elasticsearch处理SQL查询&lt;/
+    
+    </summary>
+    
+      <category term="ElasticSearch" scheme="http://yoursite.com/categories/ElasticSearch/"/>
+    
+    
+      <category term="ElasticSearch" scheme="http://yoursite.com/tags/ElasticSearch/"/>
+    
+  </entry>
   
   <entry>
     <title>ElasticSearch调研总结</title>
