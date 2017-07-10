@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-06-26T10:00:35.962Z</updated>
+  <updated>2017-07-10T03:41:35.154Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,142 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title></title>
+    <link href="http://yoursite.com/2017/07/10/Spark%20%E4%BD%9C%E4%B8%9A%E6%8F%90%E4%BA%A4%E6%96%B9%E5%BC%8F/"/>
+    <id>http://yoursite.com/2017/07/10/Spark 作业提交方式/</id>
+    <published>2017-07-10T03:42:10.567Z</published>
+    <updated>2017-07-10T03:41:35.154Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Spark作业提交方式"><a href="#Spark作业提交方式" class="headerlink" title="Spark作业提交方式"></a>Spark作业提交方式</h3><p>最近碰到个问题，在CDH上采用Spark Streaming方式运行Elasticsearch（ES）相关的处理程序，先后遇到两个JAR冲突：</p>
+<ul>
+<li>ES的jackson.jar最低需求版本2.4，与CDH的<code>hive-jdbc-1.1.0-cdh5.7.2-standalone.jar</code>里包含的jackson版本冲突</li>
+<li>Spark集群默认为JAVA1.7版本，而ES-5.4需要用JAVA1.8</li>
+</ul>
+<p>解决问题过程中发现，不同的Spark提交作业方式，得有不同的解决办法，不过基本解决思路却是一致的：</p>
+<ul>
+<li>设置Spark启动Driver、Work时的JAVA_HOME，使之指向JAVA1.8，而非默认指向的JAVA1.7</li>
+<li>将ES依赖的jackson.jar放置在JAVA CLASS PATH最前面，以便优先使用。</li>
+</ul>
+<p>本文主要聊聊常见模式下Spark Driver、Work的JAVA启动参数：</p>
+<ul>
+<li>local模式</li>
+<li>yarn-client模式</li>
+<li>yarn-cluster模式</li>
+</ul>
+<h3 id="local模式"><a href="#local模式" class="headerlink" title="local模式"></a>local模式</h3><p>local模式下，spark driver、worker都在本地线程池里运行，位于同一个  JAVA进程。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">spark-submit \</div><div class="line">  --master local[2] \</div><div class="line">  --jars jackson-core-2.8.6.jar,my-dependent.jar \</div><div class="line">  --class clife.data.spark.ESUpdate  </div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
+<ol>
+<li><p>调用<code>SPARK_HOME/bin/spark-submit</code>脚本，转向spark-class</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">exec "$&#123;SPARK_HOME&#125;"/bin/spark-class org.apache.spark.deploy.SparkSubmit "$@"</div></pre></td></tr></table></figure>
+</li>
+<li><p><code>SPARK_HOME/bin/spark-class</code> 加载spark env 变量后，启动JVM执行<code>org.apache.spark.launcher.Main</code> 获取后续执行命令，最后执行该命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">build_command() &#123;</div><div class="line">  "$RUNNER" -Xmx128m -cp "$LAUNCH_CLASSPATH" org.apache.spark.launcher.Main "$@"</div><div class="line">  printf "%d\0" $?</div><div class="line">&#125;</div><div class="line"></div><div class="line">CMD=()</div><div class="line">while IFS= read -d '' -r ARG; do</div><div class="line">  CMD+=("$ARG")</div><div class="line">done &lt; &lt;(build_command "$@")</div><div class="line"></div><div class="line">CMD=("$&#123;CMD[@]:0:$LAST&#125;")</div><div class="line">exec "$&#123;CMD[@]&#125;"</div></pre></td></tr></table></figure>
+</li>
+<li><p>运行<code>org.apache.spark.launcher.Main</code>，输出JAVA命令。</p>
+<ul>
+<li><strong>会先将SPARK_CLASSPATH变量对应的值加入JAVA CLASSPATH</strong>，随后才是SPARK_CONF、SPARK_JAR、lib等等</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">List&lt;String&gt; <span class="title">buildClassPath</span><span class="params">(String appClassPath)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">  String sparkHome = getSparkHome();</div><div class="line"></div><div class="line">  List&lt;String&gt; cp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</div><div class="line">  addToClassPath(cp, getenv(<span class="string">"SPARK_CLASSPATH"</span>));</div><div class="line">  addToClassPath(cp, appClassPath);</div><div class="line"></div><div class="line">  addToClassPath(cp, getConfDir());</div></pre></td></tr></table></figure>
+<ul>
+<li><p>输出命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span><span class="bash">&#123;JAVA_HOME&#125;/bin/java \</span></div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><code>SPARK_HOME/bin/spark-class</code>运行上述命令，正式执行Spark程序</p>
+</li>
+<li><p>jar包冲突的解决办法：</p>
+<ul>
+<li>解决jackson冲突:   <code>export SPARK_CLASSPATH=.:jackson-core-2.8.6.jar</code>，会将该jar放在JVM CLASS_PATH最前面，优先加载</li>
+<li>解决java版本冲突：本地export JAVA_HOME=jdk1.8</li>
+</ul>
+</li>
+</ol>
+<h4 id="yarn-client模式"><a href="#yarn-client模式" class="headerlink" title="yarn-client模式"></a>yarn-client模式</h4><p>会在本地启动spark driver，向yarn申请资源，集群运行task。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">--master yarn \</div><div class="line">--deploy-mode client \</div></pre></td></tr></table></figure>
+<h6 id="解决Driver端的冲突"><a href="#解决Driver端的冲突" class="headerlink" title="解决Driver端的冲突"></a>解决Driver端的冲突</h6><p>JAVA版本冲突：</p>
+<ul>
+<li>由于client模式的Driver运行在本地，可以本地export JAVA_HOME=jdk1.8，即可解决java版本问题。</li>
+</ul>
+<p>Jackson Jar冲突：</p>
+<ul>
+<li><p>脚本运行流程上和local模式一致，在执行<code>org.apache.spark.deploy.SparkSubmit</code>时，与local模式出现不同。简单来说，就是根据输入的不同参数，生成不同的启动Driver的上下文。</p>
+</li>
+<li><p>设置<code>--verbose</code> 可打印在<code>SparkSubmit</code>里通过反射执行<code>childMainClass</code> 时的参数。</p>
+</li>
+<li><p>重点关注childClasspath，会将其首先加入classloader里:</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (verbose) &#123;</div><div class="line">  printStream.println(<span class="string">s"Main class:\n<span class="subst">$childMainClass</span>"</span>)</div><div class="line">  printStream.println(<span class="string">s"Arguments:\n<span class="subst">$&#123;childArgs.mkString("\n")&#125;</span>"</span>)</div><div class="line">  printStream.println(<span class="string">s"System properties:\n<span class="subst">$&#123;sysProps.mkString("\n")&#125;</span>"</span>)</div><div class="line">  printStream.println(<span class="string">s"Classpath elements:\n<span class="subst">$&#123;childClasspath.mkString("\n")&#125;</span>"</span>)</div><div class="line">  printStream.println(<span class="string">"\n"</span>)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">val</span> loader =</div><div class="line">  <span class="keyword">if</span> (sysProps.getOrElse(<span class="string">"spark.driver.userClassPathFirst"</span>, <span class="string">"false"</span>).toBoolean) &#123;</div><div class="line">    <span class="keyword">new</span> <span class="type">ChildFirstURLClassLoader</span>(<span class="keyword">new</span> <span class="type">Array</span>[<span class="type">URL</span>](<span class="number">0</span>),</div><div class="line">      <span class="type">Thread</span>.currentThread.getContextClassLoader)</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="keyword">new</span> <span class="type">MutableURLClassLoader</span>(<span class="keyword">new</span> <span class="type">Array</span>[<span class="type">URL</span>](<span class="number">0</span>),</div><div class="line">      <span class="type">Thread</span>.currentThread.getContextClassLoader)</div><div class="line">  &#125;</div><div class="line"><span class="type">Thread</span>.currentThread.setContextClassLoader(loader)</div><div class="line"></div><div class="line"><span class="keyword">for</span> (jar &lt;- childClasspath) &#123;</div><div class="line">  addJarToClasspath(jar, loader)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Classpath elements:</div><div class="line">file:/home/my/my-main.jar</div><div class="line">file:/home/my/jackson-core-2.8.6.jar</div></pre></td></tr></table></figure>
+</li>
+<li><p>而client模式下，一般通过 <code>--jars</code>方式提交jar包，会加载jar并传达给<code>childClasspath</code></p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (deployMode == <span class="type">CLIENT</span>) &#123;</div><div class="line">  childMainClass = args.mainClass</div><div class="line">  <span class="keyword">if</span> (isUserJar(args.primaryResource)) &#123;</div><div class="line">    childClasspath += args.primaryResource</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">if</span> (args.jars != <span class="literal">null</span>) &#123; childClasspath ++= args.jars.split(<span class="string">","</span>) &#125;</div><div class="line">  <span class="keyword">if</span> (args.childArgs != <span class="literal">null</span>) &#123; childArgs ++= args.childArgs &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>这样在Driver端的jar冲突就解决了。</p>
+</li>
+</ul>
+<h6 id="解决Executor-Task的冲突"><a href="#解决Executor-Task的冲突" class="headerlink" title="解决Executor Task的冲突"></a>解决Executor Task的冲突</h6><p>  <code>ApplicationMaster</code>用于Spark向Yarn申请资源，<code>ExecutorRunnable</code>会生成Executor JVM启动时的参数（SPARK默认配置下会打印）。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">val commands = prepareCommand(masterAddress, slaveId, hostname, executorMemory, executorCores,</div><div class="line">  appId, localResources)</div><div class="line"></div><div class="line">logInfo(s"""</div><div class="line">  |===============================================================================</div><div class="line">  |YARN executor launch context:</div><div class="line">  |  env:</div><div class="line">  |$&#123;env.map &#123; case (k, v) =&gt; s"    $k -&gt; $v\n" &#125;.mkString&#125;</div><div class="line">  |  command:</div><div class="line">  |    $&#123;commands.mkString(" ")&#125;</div><div class="line">  |===============================================================================</div><div class="line">  """.stripMargin)</div></pre></td></tr></table></figure>
+<p>JAVA版本冲突：</p>
+<ul>
+<li><p>会从环境变量里获取JAVA_HOME</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> commands = prefixEnv ++ <span class="type">Seq</span>(</div><div class="line">      <span class="type">YarnSparkHadoopUtil</span>.expandEnvironment(<span class="type">Environment</span>.<span class="type">JAVA_HOME</span>) + <span class="string">"/bin/java"</span>,</div><div class="line">      <span class="string">"-server"</span>,</div></pre></td></tr></table></figure>
+</li>
+<li><p>Executor启动前的环境（设置环境变量、class-path、相关参数）也是在<code>ExecutorRunnable</code>里设置的</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">lazy</span> <span class="keyword">val</span> env = prepareEnvironment(container) <span class="comment">//准备Container启动的环境(环境变量、class-path、jvm参数、Executor参数)</span></div><div class="line"></div><div class="line">sparkConf.getExecutorEnv.foreach &#123; <span class="keyword">case</span> (key, value) =&gt;</div><div class="line">      <span class="comment">// This assumes each executor environment variable set here is a path</span></div><div class="line">      <span class="comment">// This is kept for backward compatibility and consistency with hadoop</span></div><div class="line">      <span class="type">YarnSparkHadoopUtil</span>.addPathToEnvironment(env, key, value)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">  <span class="comment">/** Get all executor environment variables set on this SparkConf */</span></div><div class="line">  <span class="function"><span class="keyword">def</span> <span class="title">getExecutorEnv</span></span>: <span class="type">Seq</span>[(<span class="type">String</span>, <span class="type">String</span>)] = &#123;</div><div class="line">    <span class="keyword">val</span> prefix = <span class="string">"spark.executorEnv."</span></div><div class="line">    getAll.filter&#123;<span class="keyword">case</span> (k, v) =&gt; k.startsWith(prefix)&#125;</div><div class="line">          .map&#123;<span class="keyword">case</span> (k, v) =&gt; (k.substring(prefix.length), v)&#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">def</span> <span class="title">addPathToEnvironment</span></span>(env: <span class="type">HashMap</span>[<span class="type">String</span>, <span class="type">String</span>], key: <span class="type">String</span>, value: <span class="type">String</span>): <span class="type">Unit</span> =   &#123;</div><div class="line">    <span class="keyword">val</span> newValue = <span class="keyword">if</span> (env.contains(key)) &#123; env(key) + getClassPathSeparator  + value &#125; <span class="keyword">else</span>       value</div><div class="line">    env.put(key, newValue)</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>解决办法：提交Spark作业时指定<code>--conf spark.executorEnv.JAVA_HOME=/JAVA1.8-dir/</code>，即可复写默认JAVA_HOME</p>
+</li>
+</ul>
+<p>Jackson.jar冲突:</p>
+<ul>
+<li><p><code>ExecutorRunnable</code>设置class-path，加载顺序为：</p>
+<ul>
+<li><code>spark.executor.extraClassPath</code></li>
+<li><code>Environment.PWD</code></li>
+<li><code>spark.yarn.jar</code>  或   <code>SPARK_JAR</code></li>
+<li><code>HadoopClasspath</code></li>
+<li><code>SPARK_DIST_CLASSPATH</code></li>
+</ul>
+</li>
+<li><p>CDH的<code>hive-jdbc-1.1.0-cdh5.7.2-standalone.jar</code>(含冲突jackson)位于<code>HadoopClasspath</code></p>
+</li>
+<li><p>解决办法：提交Spark作业时指定<code>--conf spark.executor.extraClassPath=/jackson.jar</code></p>
+<p>​</p>
+</li>
+</ul>
+<h4 id="yarn-cluster模式"><a href="#yarn-cluster模式" class="headerlink" title="yarn-cluster模式"></a>yarn-cluster模式</h4><p>向yarn申请资源，运行driver、task。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">--master yarn \</div><div class="line">--deploy-mode cluster \</div></pre></td></tr></table></figure>
+<p>命令行提交spark作业时，<code>spark-submit</code>会自动JVM，执行main-class: <code>org.apache.spark.deploy.Client</code>，然后向Yarn申请资源，submitApplication，运行Driver。</p>
+<h6 id="解决Driver端冲突"><a href="#解决Driver端冲突" class="headerlink" title="解决Driver端冲突"></a>解决Driver端冲突</h6><p><code>yarn.Client.createContainerLaunchContext()</code> 生成Driver提交环境。</p>
+<p>解决java版本冲突：</p>
+<ul>
+<li>类似yarn-client模式下运行work，JAVA_HOME也是从环境变量中取，<code>spark.yarn.appMasterEnv.JAVA_HOME</code>可以覆写。</li>
+</ul>
+<p>解决jackson.jar冲突：</p>
+<ul>
+<li>类似yarn-client模式下运行work，设置<code>spark.driver.extraClassPath=/jackson.jar</code>解决</li>
+</ul>
+<h6 id="解决Executor-Task端冲突"><a href="#解决Executor-Task端冲突" class="headerlink" title="解决Executor Task端冲突"></a>解决Executor Task端冲突</h6><ul>
+<li>解决方法同yarn-client模式下运行的work</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>在不能升级CDH集群配置前提下，解决Spark Jar冲突、JAVA版本不一致的方法其实很简单：</p>
+<ul>
+<li>定位Driver、Work的JVM启动命令</li>
+<li>将程序需要的Jar放置于class-path最前面</li>
+<li>改写默认JAVA_HOME</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;Spark作业提交方式&quot;&gt;&lt;a href=&quot;#Spark作业提交方式&quot; class=&quot;headerlink&quot; title=&quot;Spark作业提交方式&quot;&gt;&lt;/a&gt;Spark作业提交方式&lt;/h3&gt;&lt;p&gt;最近碰到个问题，在CDH上采用Spark Streaming方式运行
+    
+    </summary>
+    
+    
+  </entry>
   
   <entry>
     <title>用Elasticsearch处理SQL查询</title>
