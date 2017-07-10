@@ -74,7 +74,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="Spark,spark-submit," />
 
 
 
@@ -93,14 +93,15 @@
 
 
 <meta name="description" content="Spark作业提交方式最近碰到个问题，在CDH上采用Spark Streaming方式运行Elasticsearch（ES）相关的处理程序，先后遇到两个JAR冲突：  ES的jackson.jar最低需求版本2.4，与CDH的hive-jdbc-1.1.0-cdh5.7.2-standalone.jar里包含的jackson版本冲突 Spark集群默认为JAVA1.7版本，而ES-5.4需要用JA">
+<meta name="keywords" content="Spark,spark-submit">
 <meta property="og:type" content="article">
-<meta property="og:title" content="小骑士">
+<meta property="og:title" content="Spark作业提交方式">
 <meta property="og:url" content="http://yoursite.com/2017/07/10/Spark 作业提交方式/index.html">
 <meta property="og:site_name" content="小骑士">
 <meta property="og:description" content="Spark作业提交方式最近碰到个问题，在CDH上采用Spark Streaming方式运行Elasticsearch（ES）相关的处理程序，先后遇到两个JAR冲突：  ES的jackson.jar最低需求版本2.4，与CDH的hive-jdbc-1.1.0-cdh5.7.2-standalone.jar里包含的jackson版本冲突 Spark集群默认为JAVA1.7版本，而ES-5.4需要用JA">
-<meta property="og:updated_time" content="2017-07-10T03:41:35.154Z">
+<meta property="og:updated_time" content="2017-07-10T03:44:30.696Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="小骑士">
+<meta name="twitter:title" content="Spark作业提交方式">
 <meta name="twitter:description" content="Spark作业提交方式最近碰到个问题，在CDH上采用Spark Streaming方式运行Elasticsearch（ES）相关的处理程序，先后遇到两个JAR冲突：  ES的jackson.jar最低需求版本2.4，与CDH的hive-jdbc-1.1.0-cdh5.7.2-standalone.jar里包含的jackson版本冲突 Spark集群默认为JAVA1.7版本，而ES-5.4需要用JA">
 
 
@@ -135,7 +136,7 @@
 
 
 
-  <title> | 小骑士</title>
+  <title>Spark作业提交方式 | 小骑士</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -305,7 +306,7 @@
             
             
               
-                
+                Spark作业提交方式
               
             
           </h1>
@@ -331,6 +332,28 @@
           </span>
 
           
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spark/" itemprop="url" rel="index">
+                    <span itemprop="name">Spark</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
 
           
             
@@ -348,7 +371,7 @@
 
           
           
-             <span id="/2017/07/10/Spark 作业提交方式/" class="leancloud_visitors" data-flag-title="">
+             <span id="/2017/07/10/Spark 作业提交方式/" class="leancloud_visitors" data-flag-title="Spark作业提交方式">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -408,7 +431,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">List&lt;String&gt; <span class="title">buildClassPath</span><span class="params">(String appClassPath)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">  String sparkHome = getSparkHome();</div><div class="line"></div><div class="line">  List&lt;String&gt; cp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</div><div class="line">  addToClassPath(cp, getenv(<span class="string">"SPARK_CLASSPATH"</span>));</div><div class="line">  addToClassPath(cp, appClassPath);</div><div class="line"></div><div class="line">  addToClassPath(cp, getConfDir());</div></pre></td></tr></table></figure>
 <ul>
 <li><p>输出命令：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span><span class="bash">&#123;JAVA_HOME&#125;/bin/java \</span></div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span>&#123;JAVA_HOME&#125;/bin/java \</div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
@@ -521,6 +544,14 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag"># Spark</a>
+          
+            <a href="/tags/spark-submit/" rel="tag"># spark-submit</a>
+          
+        </div>
+      
 
       
         
@@ -623,7 +654,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -634,7 +665,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
