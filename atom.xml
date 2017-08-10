@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-07-10T03:44:30.696Z</updated>
+  <updated>2017-08-10T09:23:39.107Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,121 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Spark内存管理</title>
+    <link href="http://yoursite.com/2017/08/10/Spark%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"/>
+    <id>http://yoursite.com/2017/08/10/Spark内存管理/</id>
+    <published>2017-08-10T09:22:31.562Z</published>
+    <updated>2017-08-10T09:23:39.107Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Spark内存管理"><a href="#Spark内存管理" class="headerlink" title="Spark内存管理"></a>Spark内存管理</h3><p>Spark作为基于内存的分布式计算引擎，理解Spark内存管理方式对于程序调优、Spark运行机制有着不错的效果。本文旨在介绍Spark内存管理的脉络，总结与沉淀。</p>
+<p>在执行Spark程序时(yarn-cluster模式)，会启动两种类型的 JVM : Driver、Work。前者为控制进程，负责Job提交、根据RDD图划分Stage、生成Task，并负责相关的任务调度；后者执行Task、反馈结果给Driver。由于 Driver 的内存管理相对来说较为简单，本文主要对 Executor 的内存管理进行分析，下文中的 Spark 内存均特指 Executor 的内存。</p>
+<p>本文主要内容为:</p>
+<ul>
+<li>介绍Spark内存分类、内存额度计算方式</li>
+<li>Executor内存管理方法</li>
+<li>Spark如何使用内存</li>
+</ul>
+<h4 id="内存分类"><a href="#内存分类" class="headerlink" title="内存分类"></a>内存分类</h4><p>按存储对象分类，Spark将Executor内存分成三种类型：</p>
+<ul>
+<li>执行时内存(execution memory)，task执行特定操作时使用的内存，数据正在被使用，如：shuffle、sort、join、agg等</li>
+<li>存储内存(storage memory)，常用于存储广播变量(Broadcast)、RDD缓存等，通常这类数据会被多读很少更新</li>
+<li>其它，用于存储Spark内部代码的对象，用户代码的class对象等</li>
+</ul>
+<p>内存大小计算方式：</p>
+<ul>
+<li>JVM 系统总内存：<code>Runtime.getRuntime.maxMemory (-Xmx)</code></li>
+<li>其它内存最低值：固定为300MB</li>
+<li>存储内存：<code>(JVM 系统总内存 - 300) * spark.memory.fraction * spark.memory.storageFraction</code></li>
+<li>执行时内存：<code>(JVM 系统总内存 - 300) * spark.memory.fraction * (1 - spark.memory.storageFraction)</code></li>
+<li>其它：<code>(JVM 系统总内存 - 执行时内存 - 存储内存)</code></li>
+</ul>
+<p>而按照execution memory申请内存方式的不同，又可将其使用的内存分为：堆内存(on-heap)、堆外内存(off-heap)，前者使用JVM的堆内存，后者使用JVM之外的内存，不过2者共用同一个内存配额。</p>
+<h4 id="Executor-内存管理"><a href="#Executor-内存管理" class="headerlink" title="Executor 内存管理"></a>Executor 内存管理</h4><p>Spark提供了2种Executor Memory Manager:  <code>StaticMemoryManager</code>、<code>UnifiedMemoryManager</code>，<strong>它们均是管理整个Executor的内存(即整个JVM)</strong> 。逻辑管理，虽然内含MemoryAllocator，但并不会进行实际上的内存申请与回收。</p>
+<p>前者(<code>StaticMemoryManager</code>)会固定execution memory 和 storage memory 的内存最大值，运行期间不能超过该阈值；后者可以允许在一定条件下，使用的内存超过该阈值，比如execution memory额度用完后，可以使用storage free memory(即: storage未用完的内存额度)。</p>
+<h5 id=""><a href="#" class="headerlink" title=" "></a> </h5><p>Spark自1.6开始，就默认采用<code>UnifiedMemoryManager</code>管理Executor内存。<code>UnifiedMemoryManager</code>借助<strong>内存池(Memory Pool)</strong>记录每个taskAttempt的内存使用情况，处理taskAttempt的申请、释放内存的请求。为了避免单个taskAttempt占用大量内存，设定了内存限制：每个task内存使用率最多1/N，最少1/2N（N为task个数）。</p>
+<p>内存池被分成三类：storageMemoryPool、onHeapExecutionMemoryPool、offHeapExecutionMemoryPool。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@GuardedBy</span>(<span class="string">"this"</span>)</div><div class="line"><span class="keyword">protected</span> <span class="keyword">val</span> storageMemoryPool = <span class="keyword">new</span> <span class="type">StorageMemoryPool</span>(<span class="keyword">this</span>)</div><div class="line"><span class="meta">@GuardedBy</span>(<span class="string">"this"</span>)</div><div class="line"><span class="keyword">protected</span> <span class="keyword">val</span> onHeapExecutionMemoryPool = <span class="keyword">new</span> <span class="type">ExecutionMemoryPool</span>(<span class="keyword">this</span>, <span class="string">"on-heap execution"</span>)</div><div class="line"><span class="meta">@GuardedBy</span>(<span class="string">"this"</span>)</div><div class="line"><span class="keyword">protected</span> <span class="keyword">val</span> offHeapExecutionMemoryPool = <span class="keyword">new</span> <span class="type">ExecutionMemoryPool</span>(<span class="keyword">this</span>, <span class="string">"off-heap execution"</span>)</div></pre></td></tr></table></figure>
+<p>其申请资源的逻辑分别为：</p>
+<h5 id="申请storage-memory："><a href="#申请storage-memory：" class="headerlink" title="申请storage memory："></a>申请storage memory：</h5><ul>
+<li><p>若storageMemoryPool 内存足够，直接分配，并同时更新内存池的已分配内存数、剩余内存数</p>
+<blockquote>
+<p>Note: 对内存池的操作都是 lock.synchronized</p>
+</blockquote>
+</li>
+<li><p>若storageMemoryPool 内存不够</p>
+</li>
+<li><p>则占用onHeapExecutionMemoryPool.memoryFree；</p>
+</li>
+<li><p>若依旧不够，则释放一些指定的Block(由调用者指定BlockId)</p>
+</li>
+<li><p>若还是不够，则申请失败，返回false</p>
+</li>
+</ul>
+<h5 id="申请onHeap-Execution-Memory-基于active-task-attempt-id-："><a href="#申请onHeap-Execution-Memory-基于active-task-attempt-id-：" class="headerlink" title="申请onHeap Execution Memory(基于active task attempt id)："></a>申请onHeap Execution Memory(基于active task attempt id)：</h5><ul>
+<li>若内存池里memoryFree足够，直接分配</li>
+<li>若不够了，则向storageMemoryPool 借用memoryFree</li>
+<li>还是不够，则回收storageMemoryPool占用onHeapExecutionMemoryPool的内存</li>
+<li>若内存够了，直接返回</li>
+<li>若不够且task占用的内存低于最低配额(1/2N)，则wait；否则直接返回申请到的额度</li>
+</ul>
+<h5 id="申请offHeap-Execution-Memory-基于active-task-attempt-id"><a href="#申请offHeap-Execution-Memory-基于active-task-attempt-id" class="headerlink" title="申请offHeap Execution Memory(基于active task attempt id):"></a>申请offHeap Execution Memory(基于active task attempt id):</h5><ul>
+<li>内存够，直接分配</li>
+<li>内存不够，返回已申请到的额度，or wait</li>
+</ul>
+<h4 id="Task-内存管理"><a href="#Task-内存管理" class="headerlink" title="Task 内存管理"></a>Task 内存管理</h4><p><code>TaskMemoryManager</code>以<code>MemoryConsumer</code>的方式管理当前单个Task Attempt的内存分配与回收(spill)，以<code>pageTable</code>的方式(即: <code>MemoryBlock</code>数组)记录分配的内存地址。</p>
+<p><code>MemoryConsumer</code> 顾名思义，为内存消费者(子类有<code>ShuffleExternalSorter</code>、<code>UnsafeExternalSorter</code>等)，会向TaskMemoryManager 申请内存、释放内存，内存不够时还能写磁盘。</p>
+<p>通常，<code>MemoryConsumer</code> 每次申请，都会申请memoryPage样式的一段连续内存，即由<code>MemoryBlock</code>记录了内存的起始地址与长度。</p>
+<blockquote>
+<p>Note:  若为offHeap Memory，起始地址 加 长度就能定位到分配的内存;</p>
+<p>​            若为onHeap Memory，由于GC后起始地址会改变，故用一object 加 偏移量 标注起始地址</p>
+</blockquote>
+<p><code>MemoryConsumer</code>申请内存处理逻辑：</p>
+<ul>
+<li><p><code>TaskMemoryManager</code> 向Executor内存管理(<code>UnifiedMemoryManager</code>) 申请内存</p>
+</li>
+<li><p>若内存不够，<code>TaskMemoryManager</code>循环释放其余<code>MemoryConsumer</code>占用的内存，即spill磁盘</p>
+</li>
+<li><p>若依旧不够，该<code>MemoryConsumer</code>写磁盘</p>
+</li>
+<li><p>获取申请到的内存数额，生成下一个page编号</p>
+</li>
+<li><p>调用<code>MemoryAllocator</code>，实际执行内存分配，并将page记录到pageTable</p>
+<ul>
+<li>若为onHeapMemroy，有个内存缓存池，对于1MB及以上的请求，先在池子里查看有无可用内存，有则直接使用池子里的内存（释放内存时，直接将内存丢池子里，池子里的内存为弱引用，Full GC时可回收）；若池子里没有，则new long[size]，申请一个大数组。</li>
+<li>若为offHeapMemory，直接<code>Platform.allocateMemory(size)</code>，无需考虑JVM GC导致内存挪动的问题</li>
+</ul>
+</li>
+<li><p>若page.size，即申请到的内存小于所需内存，则释放该page，抛出OutOfMemoryError</p>
+<blockquote>
+<p>这个是比较奇怪的，为什么不在实际申请资源前进行判断那？ 若申请到的内存数额低于预期，直接就抛异常。 是为了子类重载？ </p>
+</blockquote>
+</li>
+</ul>
+<h4 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h4><p>Spark内存管理模块具有很强的层次性：</p>
+<ul>
+<li>Executor Memory Manager：管理整个JVM的storage\execution内存</li>
+<li>Task Memory Manager：管理单个taskAttempt的内存，向executor申请内存</li>
+<li>Memory Consumer：内存实际消费者，其子类与具体处理逻辑紧密相连</li>
+</ul>
+<h5 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h5><ul>
+<li><a href="https://www.ibm.com/developerworks/cn/analytics/library/ba-cn-apache-spark-memory-management/index.html?ca=drs-&amp;utm_source=tuicool&amp;utm_medium=referral" target="_blank" rel="external">Apache Spark 内存管理详解</a></li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;Spark内存管理&quot;&gt;&lt;a href=&quot;#Spark内存管理&quot; class=&quot;headerlink&quot; title=&quot;Spark内存管理&quot;&gt;&lt;/a&gt;Spark内存管理&lt;/h3&gt;&lt;p&gt;Spark作为基于内存的分布式计算引擎，理解Spark内存管理方式对于程序调优、Sp
+    
+    </summary>
+    
+      <category term="Spark" scheme="http://yoursite.com/categories/Spark/"/>
+    
+    
+      <category term="Spark" scheme="http://yoursite.com/tags/Spark/"/>
+    
+  </entry>
   
   <entry>
     <title>Spark作业提交方式</title>
