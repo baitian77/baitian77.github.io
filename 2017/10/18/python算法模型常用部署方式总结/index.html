@@ -74,7 +74,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="算法部署," />
 
 
 
@@ -92,15 +92,17 @@
 
 
 
-<meta name="description" content="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="小骑士">
-<meta property="og:url" content="http://yoursite.com/tags/ElasticSearch/index.html">
+<meta name="description" content="Python算法模型常用部署方式总结很绕口的标题，这段时间看了好些Tensorflow、Tensorflow-Serving相关的源码与文档，尝试搭建一个分布式的算法模型线上部署架构。 最开始调研了Tensorflow-Serving（毕竟名字大啊），对于其能自动识别并加装模型、可配置的模型版本管理策略、方便的A/B Test等等很是喜爱。可惜业务优先级调整，得优先部署算法团队基于python版本">
+<meta name="keywords" content="算法部署">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python算法模型常用部署方式总结">
+<meta property="og:url" content="http://yoursite.com/2017/10/18/python算法模型常用部署方式总结/index.html">
 <meta property="og:site_name" content="小骑士">
-<meta property="og:description" content="description">
+<meta property="og:description" content="Python算法模型常用部署方式总结很绕口的标题，这段时间看了好些Tensorflow、Tensorflow-Serving相关的源码与文档，尝试搭建一个分布式的算法模型线上部署架构。 最开始调研了Tensorflow-Serving（毕竟名字大啊），对于其能自动识别并加装模型、可配置的模型版本管理策略、方便的A/B Test等等很是喜爱。可惜业务优先级调整，得优先部署算法团队基于python版本">
+<meta property="og:updated_time" content="2017-10-18T12:42:16.040Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="小骑士">
-<meta name="twitter:description" content="description">
+<meta name="twitter:title" content="Python算法模型常用部署方式总结">
+<meta name="twitter:description" content="Python算法模型常用部署方式总结很绕口的标题，这段时间看了好些Tensorflow、Tensorflow-Serving相关的源码与文档，尝试搭建一个分布式的算法模型线上部署架构。 最开始调研了Tensorflow-Serving（毕竟名字大啊），对于其能自动识别并加装模型、可配置的模型版本管理策略、方便的A/B Test等等很是喜爱。可惜业务优先级调整，得优先部署算法团队基于python版本">
 
 
 
@@ -128,13 +130,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/tags/ElasticSearch/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/10/18/python算法模型常用部署方式总结/"/>
 
 
 
 
 
-  <title>标签: ElasticSearch | 小骑士</title>
+  <title>Python算法模型常用部署方式总结 | 小骑士</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -169,7 +171,7 @@
     
   
 
-  <div class="container sidebar-position-left  ">
+  <div class="container sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -273,74 +275,245 @@
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-collapse">
-    <div class="collection-title">
-      <h2 >
-        ElasticSearch
-        <small>标签</small>
-      </h2>
-    </div>
-
+  <div id="posts" class="posts-expand">
     
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2017/06/26/用Elasticsearch处理SQL查询/" itemprop="url">
-              
-                <span itemprop="name">用Elasticsearch处理SQL查询</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-06-26T17:59:54+08:00"
-              content="2017-06-26" >
-          06-26
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2017/05/10/ElasticSearch调研总结/" itemprop="url">
-              
-                <span itemprop="name">ElasticSearch调研总结</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-05-10T17:37:53+08:00"
-              content="2017-05-10" >
-          05-10
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-    
-  </div>
 
   
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/18/python算法模型常用部署方式总结/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="knightyang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="小骑士">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Python算法模型常用部署方式总结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-18T20:41:41+08:00">
+                2017-10-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/算法部署/" itemprop="url" rel="index">
+                    <span itemprop="name">算法部署</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a class="cloud-tie-join-count" href="/2017/10/18/python算法模型常用部署方式总结/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count join-count" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2017/10/18/python算法模型常用部署方式总结/" class="leancloud_visitors" data-flag-title="Python算法模型常用部署方式总结">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Python算法模型常用部署方式总结"><a href="#Python算法模型常用部署方式总结" class="headerlink" title="Python算法模型常用部署方式总结"></a>Python算法模型常用部署方式总结</h3><p>很绕口的标题，这段时间看了好些Tensorflow、Tensorflow-Serving相关的源码与文档，尝试搭建一个分布式的算法模型线上部署架构。</p>
+<p>最开始调研了Tensorflow-Serving（毕竟名字大啊），对于其能自动识别并加装模型、可配置的模型版本管理策略、方便的A/B Test等等很是喜爱。可惜业务优先级调整，得优先部署算法团队基于python版本opencv、dlib实现的人脸识别算法，只好先将Tensorflow-Serving放一放，后续有时间会总结一些Tensorflow(-Serving)架构的源码分析。(后面也想到一种很低效的实现方式)。</p>
+<p>言归正传，python算法模型常用部署方式总结：</p>
+<h4 id="预期功能"><a href="#预期功能" class="headerlink" title="预期功能"></a>预期功能</h4><ul>
+<li>分布式、可扩展、高可用、框架链路响应十毫秒内</li>
+<li>支持Python服务</li>
+<li>热部署（上线新服务时，无需重启/暂停框架）</li>
+<li>多服务（可部署多个算法服务，同时提供服务，服务间无耦合）</li>
+<li>多版本（支持单服务多版本同时在线）</li>
+<li>服务自动发现、自动部署</li>
+</ul>
+<h4 id="部署方案总结"><a href="#部署方案总结" class="headerlink" title="部署方案总结"></a>部署方案总结</h4><ul>
+<li><p>基于web-server(利用Django或Flask)，部署python服务，提供restful api</p>
+<ul>
+<li>例如: <a href="https://www.r-bloggers.com/lang/uncategorized/1579" target="_blank" rel="external">python数据挖掘模型的API部署</a></li>
+</ul>
+</li>
+<li><p>部署SOA + 算法服务 </p>
+<blockquote>
+<p>Note:  即基于SOA框架实现分布式服务，其麻烦点在于绝大部分SOA框架都是基于JAVA/C++编写(例如常用的dubbo)，而这里的算法服务却是基于python</p>
+</blockquote>
+<ul>
+<li><p>将python算法模型改写成JAVA or C++</p>
+<ul>
+<li><p>例如用PMML(JAVA)重新实现算法模型, 然后用JAVA重写个加载模型后的业务处理逻辑</p>
+<blockquote>
+<p>但是PMML无法封装dlib里的模型dlib_face_recognition_resnet_model_v1</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>JAVA服务类里直接调用shell命令执行python代码</p>
+</li>
+<li><p>实现Python SOA(饿了么自研,思路开源,代码未开源)</p>
+<ul>
+<li><a href="https://eleme.github.io/blog/2016/eleme-python-soa/" target="_blank" rel="external">饿了么的 Python SOA</a> </li>
+</ul>
+</li>
+<li><p>或者自研：python server + zk 构建服务集群，java client thrift调取服务</p>
+</li>
+</ul>
+</li>
+<li><p>专门的框架，如tensorflow-serving，可以能很方便的上线部署、灰度测试等等</p>
+<ul>
+<li>若要自研python版本算法框架，可参考<a href="http://www.jianshu.com/p/26abf06ebecb" target="_blank" rel="external">AlphaML(系统篇)-机器学习serving框架</a></li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/算法部署/" rel="tag"># 算法部署</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/10/Spark内存管理/" rel="next" title="Spark内存管理">
+                <i class="fa fa-chevron-left"></i> Spark内存管理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -348,6 +521,12 @@
 
 
           
+  <div class="comments" id="comments">
+    
+      <div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+    
+  </div>
+
 
         </div>
         
@@ -367,8 +546,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -437,6 +625,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Python算法模型常用部署方式总结"><span class="nav-number">1.</span> <span class="nav-text">Python算法模型常用部署方式总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#预期功能"><span class="nav-number">1.1.</span> <span class="nav-text">预期功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#部署方案总结"><span class="nav-number">1.2.</span> <span class="nav-text">部署方案总结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -550,6 +754,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
 
   
 

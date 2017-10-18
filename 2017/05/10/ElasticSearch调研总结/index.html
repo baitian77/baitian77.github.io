@@ -484,7 +484,7 @@
 <li><p>导入方法：</p>
 <ul>
 <li><p>安装第三方插件：elasticsearch-jdbc，按照git上的操作指引进行数据导入，git地址：<a href="https://github.com/jprante/elasticsearch-jdbc" target="_blank" rel="external">elasticsearch-jdbc</a>，导入脚本：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span>!/bin/sh</div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span><span class="bash">!/bin/sh</span></div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
@@ -751,7 +751,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -762,7 +762,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -773,7 +773,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-count">5</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

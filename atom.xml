@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-08-10T09:23:39.107Z</updated>
+  <updated>2017-10-18T12:42:16.040Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,76 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Python算法模型常用部署方式总结</title>
+    <link href="http://yoursite.com/2017/10/18/python%E7%AE%97%E6%B3%95%E6%A8%A1%E5%9E%8B%E5%B8%B8%E7%94%A8%E9%83%A8%E7%BD%B2%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/"/>
+    <id>http://yoursite.com/2017/10/18/python算法模型常用部署方式总结/</id>
+    <published>2017-10-18T12:41:41.600Z</published>
+    <updated>2017-10-18T12:42:16.040Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="Python算法模型常用部署方式总结"><a href="#Python算法模型常用部署方式总结" class="headerlink" title="Python算法模型常用部署方式总结"></a>Python算法模型常用部署方式总结</h3><p>很绕口的标题，这段时间看了好些Tensorflow、Tensorflow-Serving相关的源码与文档，尝试搭建一个分布式的算法模型线上部署架构。</p>
+<p>最开始调研了Tensorflow-Serving（毕竟名字大啊），对于其能自动识别并加装模型、可配置的模型版本管理策略、方便的A/B Test等等很是喜爱。可惜业务优先级调整，得优先部署算法团队基于python版本opencv、dlib实现的人脸识别算法，只好先将Tensorflow-Serving放一放，后续有时间会总结一些Tensorflow(-Serving)架构的源码分析。(后面也想到一种很低效的实现方式)。</p>
+<p>言归正传，python算法模型常用部署方式总结：</p>
+<h4 id="预期功能"><a href="#预期功能" class="headerlink" title="预期功能"></a>预期功能</h4><ul>
+<li>分布式、可扩展、高可用、框架链路响应十毫秒内</li>
+<li>支持Python服务</li>
+<li>热部署（上线新服务时，无需重启/暂停框架）</li>
+<li>多服务（可部署多个算法服务，同时提供服务，服务间无耦合）</li>
+<li>多版本（支持单服务多版本同时在线）</li>
+<li>服务自动发现、自动部署</li>
+</ul>
+<h4 id="部署方案总结"><a href="#部署方案总结" class="headerlink" title="部署方案总结"></a>部署方案总结</h4><ul>
+<li><p>基于web-server(利用Django或Flask)，部署python服务，提供restful api</p>
+<ul>
+<li>例如: <a href="https://www.r-bloggers.com/lang/uncategorized/1579" target="_blank" rel="external">python数据挖掘模型的API部署</a></li>
+</ul>
+</li>
+<li><p>部署SOA + 算法服务 </p>
+<blockquote>
+<p>Note:  即基于SOA框架实现分布式服务，其麻烦点在于绝大部分SOA框架都是基于JAVA/C++编写(例如常用的dubbo)，而这里的算法服务却是基于python</p>
+</blockquote>
+<ul>
+<li><p>将python算法模型改写成JAVA or C++</p>
+<ul>
+<li><p>例如用PMML(JAVA)重新实现算法模型, 然后用JAVA重写个加载模型后的业务处理逻辑</p>
+<blockquote>
+<p>但是PMML无法封装dlib里的模型dlib_face_recognition_resnet_model_v1</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>JAVA服务类里直接调用shell命令执行python代码</p>
+</li>
+<li><p>实现Python SOA(饿了么自研,思路开源,代码未开源)</p>
+<ul>
+<li><a href="https://eleme.github.io/blog/2016/eleme-python-soa/" target="_blank" rel="external">饿了么的 Python SOA</a> </li>
+</ul>
+</li>
+<li><p>或者自研：python server + zk 构建服务集群，java client thrift调取服务</p>
+</li>
+</ul>
+</li>
+<li><p>专门的框架，如tensorflow-serving，可以能很方便的上线部署、灰度测试等等</p>
+<ul>
+<li>若要自研python版本算法框架，可参考<a href="http://www.jianshu.com/p/26abf06ebecb" target="_blank" rel="external">AlphaML(系统篇)-机器学习serving框架</a></li>
+</ul>
+</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;Python算法模型常用部署方式总结&quot;&gt;&lt;a href=&quot;#Python算法模型常用部署方式总结&quot; class=&quot;headerlink&quot; title=&quot;Python算法模型常用部署方式总结&quot;&gt;&lt;/a&gt;Python算法模型常用部署方式总结&lt;/h3&gt;&lt;p&gt;很绕口的标题
+    
+    </summary>
+    
+      <category term="算法部署" scheme="http://yoursite.com/categories/%E7%AE%97%E6%B3%95%E9%83%A8%E7%BD%B2/"/>
+    
+    
+      <category term="算法部署" scheme="http://yoursite.com/tags/%E7%AE%97%E6%B3%95%E9%83%A8%E7%BD%B2/"/>
+    
+  </entry>
   
   <entry>
     <title>Spark内存管理</title>
@@ -169,7 +239,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">List&lt;String&gt; <span class="title">buildClassPath</span><span class="params">(String appClassPath)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">  String sparkHome = getSparkHome();</div><div class="line"></div><div class="line">  List&lt;String&gt; cp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</div><div class="line">  addToClassPath(cp, getenv(<span class="string">"SPARK_CLASSPATH"</span>));</div><div class="line">  addToClassPath(cp, appClassPath);</div><div class="line"></div><div class="line">  addToClassPath(cp, getConfDir());</div></pre></td></tr></table></figure>
 <ul>
 <li><p>输出命令：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span>&#123;JAVA_HOME&#125;/bin/java \</div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span><span class="bash">&#123;JAVA_HOME&#125;/bin/java \</span></div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
@@ -544,7 +614,7 @@
 <li><p>导入方法：</p>
 <ul>
 <li><p>安装第三方插件：elasticsearch-jdbc，按照git上的操作指引进行数据导入，git地址：<a href="https://github.com/jprante/elasticsearch-jdbc" target="_blank" rel="external">elasticsearch-jdbc</a>，导入脚本：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span>!/bin/sh</div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span><span class="bash">!/bin/sh</span></div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
