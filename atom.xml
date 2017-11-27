@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-10-18T12:42:16.040Z</updated>
+  <updated>2017-11-27T02:15:14.798Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,80 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Tensorflow &quot;hello world&quot;源码分析</title>
+    <link href="http://yoursite.com/2017/11/27/Tensorflow%20%E2%80%9Chello%20world%E2%80%9D%E7%A8%8B%E5%BA%8F%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89/"/>
+    <id>http://yoursite.com/2017/11/27/Tensorflow “hello world”程序源码分析（一）/</id>
+    <published>2017-11-27T02:13:55.935Z</published>
+    <updated>2017-11-27T02:15:14.798Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="“hello-world”-代码"><a href="#“hello-world”-代码" class="headerlink" title="“hello world” 代码"></a>“hello world” 代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">import tensorflow as tf</div><div class="line"></div><div class="line"># 创建一个常量 op, 产生一个 1x2 矩阵. 这个 op 被作为一个节点</div><div class="line"># 加到默认图中.</div><div class="line">#</div><div class="line"># 构造器的返回值代表该常量 op 的返回值.</div><div class="line">matrix1 = tf.constant([[3., 3.]])</div><div class="line"></div><div class="line"># 创建另外一个常量 op, 产生一个 2x1 矩阵.</div><div class="line">matrix2 = tf.constant([[2.],[2.]])</div><div class="line"></div><div class="line"># 创建一个矩阵乘法 matmul op , 把 &apos;matrix1&apos; 和 &apos;matrix2&apos; 作为输入.</div><div class="line"># 返回值 &apos;product&apos; 代表矩阵乘法的结果.</div><div class="line">product = tf.matmul(matrix1, matrix2)</div><div class="line"></div><div class="line"># 启动默认图.</div><div class="line">sess = tf.Session()</div><div class="line"></div><div class="line"># 调用 sess 的 &apos;run()&apos; 方法来执行矩阵乘法 op, 传入 &apos;product&apos; 作为该方法的参数.</div><div class="line"># 上面提到, &apos;product&apos; 代表了矩阵乘法 op 的输出, 传入它是向方法表明, 我们希望取回</div><div class="line"># 矩阵乘法 op 的输出.</div><div class="line">#</div><div class="line"># 整个执行过程是自动化的, 会话负责传递 op 所需的全部输入. op 通常是并发执行的.</div><div class="line">#</div><div class="line"># 函数调用 &apos;run(product)&apos; 触发了图中三个 op (两个常量 op 和一个矩阵乘法 op) 的执行.</div><div class="line">#</div><div class="line"># 返回值 &apos;result&apos; 是一个 numpy `ndarray` 对象.</div><div class="line">result = sess.run(product)</div><div class="line">print result</div><div class="line"># ==&gt; [[ 12.]]</div><div class="line"></div><div class="line"># 任务完成, 关闭会话.</div><div class="line">sess.close()</div></pre></td></tr></table></figure>
+<h4 id="一-构建Const-Tensor"><a href="#一-构建Const-Tensor" class="headerlink" title="一. 构建Const Tensor"></a>一. 构建Const Tensor</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">matrix1 = tf.constant([[3., 3.]])</div></pre></td></tr></table></figure>
+<ol>
+<li>获取global default_graph，图在初始时会获取所有已注册的operator<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">self._registered_ops = op_def_registry.get_registered_ops()</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>operator的注册由gen_array_ops.py完成</p>
+<blockquote>
+<p>Note: gen_array_ops.py是编译tensorflow时动态生成的文件，文件内容来自tensorflow\python\framework\python_op_gen.cc</p>
+<p>这种动态生成文件的好处在哪儿那？  是为了可以生成包含custom operator的gen_array_ops.py？</p>
+</blockquote>
+<ol>
+<li>将[[3., 3.]] 转换成Tensor</li>
+</ol>
+<ul>
+<li>将python的 list 转换成<code>numpy ndarray</code></li>
+<li>构建<code>TensorProto</code>对象, 指定<code>dtype</code>、<code>tensor_shape</code>、<code>tensor_context</code>三个属性，分别代表Tensor的数据类型对应的enum(省空间，如float32对应值<code>1</code>)、形状(如 1 * 2 )、值对应的可序列化字符串（即nparray.toString() ）<blockquote>
+<p>proto格式可用于传输与保存：python -&gt; c++，设备之间传输；也可用于保存与加载</p>
+</blockquote>
+</li>
+</ul>
+<ol>
+<li><p>创建Const operator</p>
+<ul>
+<li>构建NodeDef，指定name、attr(即dtype、value)</li>
+<li>根据output_types构建List[Tensor<i, output_type="">]</i,></li>
+</ul>
+</li>
+<li><p>返回ConstOperator.output[0]作为Const Tensor</p>
+</li>
+</ol>
+<h4 id="二-构建矩阵乘法Tensor"><a href="#二-构建矩阵乘法Tensor" class="headerlink" title="二. 构建矩阵乘法Tensor"></a>二. 构建矩阵乘法Tensor</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">product = tf.matmul(matrix1, matrix2)</div></pre></td></tr></table></figure>
+<ol>
+<li>也是先将输入转换成Tensor（此处matrix1、matrix2已是tensor）</li>
+<li>构建matmul op，自动推导output tensors的数量与类型<blockquote>
+<p>所有op的参数定义都位于文件E:\tensorflow-master\tensorflow\core\ops\ops.pbtxt</p>
+</blockquote>
+</li>
+<li>返回output tensor</li>
+</ol>
+<h4 id="三-启动Session"><a href="#三-启动Session" class="headerlink" title="三. 启动Session"></a>三. 启动Session</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sess = tf.Session()</div></pre></td></tr></table></figure>
+<ol>
+<li>Tensorflow里Python相当于Client，C++ 为Server，session的实际运行位于c++。 通过Swig，python可调用C++的function。</li>
+<li>根据配置信息获取session<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Status NewSession(const SessionOptions&amp; options, Session** out_session) &#123;</div><div class="line">  SessionFactory* factory;</div><div class="line">  Status s = SessionFactory::GetFactory(options, &amp;factory);</div><div class="line">  if (!s.ok()) &#123;</div><div class="line">    *out_session = nullptr;</div><div class="line">    LOG(ERROR) &lt;&lt; s;</div><div class="line">    return s;</div><div class="line">  &#125;</div><div class="line">  *out_session = factory-&gt;NewSession(options);</div><div class="line">  if (!*out_session) &#123;</div><div class="line">    return errors::Internal(&quot;Failed to create session.&quot;);</div><div class="line">  &#125;</div><div class="line">  return Status::OK();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>若target为空，则为DirectSession，代表local模式<br>若target指定了ip:port列表，则为集群模式</p>
+<h4 id="四-执行图计算"><a href="#四-执行图计算" class="headerlink" title="四. 执行图计算"></a>四. 执行图计算</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">result = sess.run(product)</div></pre></td></tr></table></figure>
+<ol>
+<li>将tensor对应的python数据结构转换成c++格式的</li>
+<li>调用directSession.run()  <strong>（实际执行，包含图的构建、剪枝、优化，基于设备的分区等等，后续进行长文分析）</strong></li>
+</ol>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;“hello-world”-代码&quot;&gt;&lt;a href=&quot;#“hello-world”-代码&quot; class=&quot;headerlink&quot; title=&quot;“hello world” 代码&quot;&gt;&lt;/a&gt;“hello world” 代码&lt;/h3&gt;&lt;figure class=&quot;hi
+    
+    </summary>
+    
+      <category term="Tensorflow" scheme="http://yoursite.com/categories/Tensorflow/"/>
+    
+    
+      <category term="Tensorflow" scheme="http://yoursite.com/tags/Tensorflow/"/>
+    
+  </entry>
   
   <entry>
     <title>Python算法模型常用部署方式总结</title>
@@ -239,7 +313,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">List&lt;String&gt; <span class="title">buildClassPath</span><span class="params">(String appClassPath)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">  String sparkHome = getSparkHome();</div><div class="line"></div><div class="line">  List&lt;String&gt; cp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</div><div class="line">  addToClassPath(cp, getenv(<span class="string">"SPARK_CLASSPATH"</span>));</div><div class="line">  addToClassPath(cp, appClassPath);</div><div class="line"></div><div class="line">  addToClassPath(cp, getConfDir());</div></pre></td></tr></table></figure>
 <ul>
 <li><p>输出命令：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span><span class="bash">&#123;JAVA_HOME&#125;/bin/java \</span></div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span>&#123;JAVA_HOME&#125;/bin/java \</div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
@@ -614,7 +688,7 @@
 <li><p>导入方法：</p>
 <ul>
 <li><p>安装第三方插件：elasticsearch-jdbc，按照git上的操作指引进行数据导入，git地址：<a href="https://github.com/jprante/elasticsearch-jdbc" target="_blank" rel="external">elasticsearch-jdbc</a>，导入脚本：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span><span class="bash">!/bin/sh</span></div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span>!/bin/sh</div><div class="line">export JAVA_HOME=/home/knightyang/jdk1.8.0_131</div><div class="line">export PATH=$&#123;JAVA_HOME&#125;/bin/:$PATH;</div><div class="line">JDBC_IMPORTER_HOME=/home/knightyang/elasticsearch-jdbc-2.3.4.0</div><div class="line">bin=$JDBC_IMPORTER_HOME/bin</div><div class="line">lib=$JDBC_IMPORTER_HOME/lib</div><div class="line">echo '&#123;</div><div class="line">"type" : "jdbc",</div><div class="line">"jdbc": &#123;</div><div class="line">"elasticsearch.autodiscover":true,</div><div class="line">"url":"jdbc:mysql://host:3306/test",  </div><div class="line">"user":"test",  </div><div class="line">"password":"test",  </div><div class="line">"sql":"select *,id  as _id from user_info_yqj ",</div><div class="line">"elasticsearch" : &#123;</div><div class="line">  "host" : "host",</div><div class="line">  "port" : 9300</div><div class="line">&#125;,</div><div class="line">"index" : "yqj_info_index_more",  </div><div class="line">"type" : "yqj_info_type_more"  </div><div class="line">&#125;</div><div class="line">&#125;'| java \</div><div class="line">  -cp "$&#123;lib&#125;/*" \</div><div class="line">  -Dlog4j.configurationFile=$&#123;bin&#125;/log4j2.xml \</div><div class="line">  org.xbib.tools.Runner \</div><div class="line">  org.xbib.tools.JDBCImporter</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>

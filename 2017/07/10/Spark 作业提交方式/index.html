@@ -431,7 +431,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">List&lt;String&gt; <span class="title">buildClassPath</span><span class="params">(String appClassPath)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">  String sparkHome = getSparkHome();</div><div class="line"></div><div class="line">  List&lt;String&gt; cp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</div><div class="line">  addToClassPath(cp, getenv(<span class="string">"SPARK_CLASSPATH"</span>));</div><div class="line">  addToClassPath(cp, appClassPath);</div><div class="line"></div><div class="line">  addToClassPath(cp, getConfDir());</div></pre></td></tr></table></figure>
 <ul>
 <li><p>输出命令：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span><span class="bash">&#123;JAVA_HOME&#125;/bin/java \</span></div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">$</span>&#123;JAVA_HOME&#125;/bin/java \</div><div class="line">  -cp /CDH-5.7.2-1.cdh5.7/jars/* \</div><div class="line">  -XX:MaxPermSize=256m \</div><div class="line">  org.apache.spark.deploy.SparkSubmit \</div><div class="line">  --master local[2] \</div><div class="line">  --class my.main.class.name \</div><div class="line">  ...</div><div class="line">  my-main.jar</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
@@ -647,7 +647,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -658,7 +658,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-count">5</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -669,7 +669,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-count">6</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
