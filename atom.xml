@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-01-23T03:46:06.660Z</updated>
+  <updated>2017-11-27T02:15:14.798Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,81 +14,6 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
-  
-  <entry>
-    <title></title>
-    <link href="http://yoursite.com/2018/01/23/%E7%AC%AC%E5%9B%9B%E8%8C%83%E5%BC%8F%E5%85%88%E7%9F%A5%E5%B9%B3%E5%8F%B0%E4%B8%8EGoogle%20Cloud%20automl%E5%AF%B9%E6%AF%94%E5%88%86%E6%9E%90%E7%AE%80%E8%AF%84/"/>
-    <id>http://yoursite.com/2018/01/23/第四范式先知平台与Google Cloud automl对比分析简评/</id>
-    <published>2018-01-23T03:44:59.477Z</published>
-    <updated>2018-01-23T03:46:06.660Z</updated>
-    
-    <content type="html"><![CDATA[<p>### </p>
-<h4 id="1-第四范式先知平台"><a href="#1-第四范式先知平台" class="headerlink" title="1. 第四范式先知平台"></a>1. 第四范式先知平台</h4><ul>
-<li><p>简介</p>
-<p>“先知”聚集了数据免清洗、模型自学习、一键上线、弹性计算、实时数据流、智能数据集成、特征自动组合、面向 AI的计算框架、模型解读技术、个性化需求满足这10 大超级功能，“先知” 平台能够自动化、智能化的实现机器学习全流程。</p>
-</li>
-<li><p>分析</p>
-<p>先知平台底层是第四范式自研的大规模分布式机器学习框架 GDBT（General Distributed Brain Technology）。</p>
-<p><strong>特点是将处理机器学习相关的功能封装成了独立的算子，例如数据预处理阶段的sql算子、数据拆分算子、数据清洗算子；特征工程相关的特征抽取算子、自动特征组合算子；分类相关的逻辑回归算子、DNN算子；模型预测与评估相关的算子等等。特定算子的输出可作为一些算子的输入：例如特征抽取算子的输出可直接传递给逻辑回归算子。</strong></p>
-<p>整体架构包括了离线计算（基于yarn、spark的离线计算集群，常用于模型训练）与实时计算（基于高性能云服务器，接收Http请求与RPC请求，常用于线上预测）。其整体架构图如下：<br><img src="https://res.infoq.com/articles/the-fourth-paradigm-prophet-platform/zh/resources/01.jpg" alt="先知平台架构图"></p>
-</li>
-<li><p>用法</p>
-<p>登陆先知平台直接拖拽算子，填写算子参数。</p>
-<p><img src="web.jpg" alt="先知平台用户操作界面"></p>
-</li>
-<li><p>小结</p>
-<p>先知系统将机器学习相关的数据预处理作继承为算子，同时封装机器学习相关算法为算子，相关算子间可以构成数据依赖；依托高性能云服务器和分布式Yarn集群可提供高效的在线预测与分类、离线训练；提供图形化用户界面，可通过配置算子的方式方便构建模型并提供服务。</p>
-<p>将机器学习算法封装成算子也带来不足：若平台已有算法不能满足业务需求，则无法使用，平台没有支持业务方自定义算子。</p>
-</li>
-</ul>
-<h4 id="2-Google-Cloud-automl"><a href="#2-Google-Cloud-automl" class="headerlink" title="2. Google Cloud automl"></a>2. Google Cloud automl</h4><ul>
-<li><p>简介</p>
-<p> Google的自动训练模型平台，基于监督学习创建，开发者只需要通过鼠标拖拽的方式上传一组图片、导入标签，随后谷歌系统就会自动生成一个定制化的机器学习模型，几乎不需要任何人为的干预。</p>
-</li>
-</ul>
-<ul>
-<li><p>分析</p>
-<p>该平台目前只提供了Cloud AutoML Vision(处理图片、视频相关)，后续会推出更多功能。现阶段处于试用期，需要提交申请才可能使用（ps：以个人名义申请快一周了还未有答复）。</p>
-<p><strong>最大的特点是运用迁移学习技术，基于已训练好的旧场景模型和少量新场景数据，重新训练一个适用于新场景的模型；还通过learning2learn功能自动挑选适合的模型，搭配超参数调整技术（Hyperparameter tuning technologies）自动调整参数。这样模型训练和调参都能自动</strong></p>
-</li>
-<li><p>用法</p>
-<p>尚未申请到试用资格，只能从官方博客视频中查看用法：上传数据配置参数、点击训练即可，支持模型线上部署，提供Restful接口。</p>
-</li>
-<li><p>小结</p>
-<p>基于相似场景已有的模型和新场景的数据，自动调参训练出适用于新场景的模型。</p>
-</li>
-</ul>
-<h3 id="3-先知平台与Google-Cloud-automl的对比分析"><a href="#3-先知平台与Google-Cloud-automl的对比分析" class="headerlink" title="3. 先知平台与Google Cloud automl的对比分析"></a>3. 先知平台与Google Cloud automl的对比分析</h3><ul>
-<li><p><strong>用途</strong></p>
-<p>先知平台侧重于机器学习，将机器学习相关功能点算子化，业务方通过配置算子、构建算子DAG依赖图来执行。</p>
-<p>Google cloud automl侧重于基于已有模型和少量新场景数据，快速训练出新模型。</p>
-</li>
-<li><p><strong>可借鉴点</strong></p>
-<ul>
-<li>功能算子化。代码封装、解耦</li>
-<li>迁移学习。少量样本数据、模型复用</li>
-</ul>
-</li>
-</ul>
-<h3 id="4-参考资料"><a href="#4-参考资料" class="headerlink" title="4. 参考资料"></a>4. 参考资料</h3><ul>
-<li><a href="http://blog.csdn.net/dzJx2EOtaA24Adr/article/details/79091614" target="_blank" rel="external">谷歌重磅：不用写代码也能建模调参，Cloud AutoML要实现全民玩AI</a></li>
-<li><a href="https://www.blog.google/topics/google-cloud/cloud-automl-making-ai-accessible-every-business/" target="_blank" rel="external">Cloud AutoML: Making AI accessible to every business</a></li>
-<li><a href="http://www.sohu.com/a/119200448_465975" target="_blank" rel="external">专栏 | 第四范式先知平台的整体架构和实现细节</a></li>
-<li><a href="https://prophet.4paradigm.com/#/prophets" target="_blank" rel="external">第四范式先知平台</a></li>
-</ul>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;### &lt;/p&gt;
-&lt;h4 id=&quot;1-第四范式先知平台&quot;&gt;&lt;a href=&quot;#1-第四范式先知平台&quot; class=&quot;headerlink&quot; title=&quot;1. 第四范式先知平台&quot;&gt;&lt;/a&gt;1. 第四范式先知平台&lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;简介&lt;/p&gt;
-&lt;p&gt;“先知”聚
-    
-    </summary>
-    
-    
-  </entry>
   
   <entry>
     <title>Tensorflow &quot;hello world&quot;源码分析</title>
